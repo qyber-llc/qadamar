@@ -1,0 +1,74 @@
+# Default deny in both directions, then only what a tenant needs. Kubelet probes and kubectl port-forward do not
+# cross these policies. CIDRs below are documentation ranges (RFC 5737): PARAMETERS a cloud overlay replaces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gate-ingress
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ingress-nginx} # PARAMETER: ingress controller namespace
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: monitoring} # PARAMETER: metrics scraper namespace
+          # only its Prometheus pods (same element = AND). NetworkPolicy cannot filter paths: the scraper shares port 8787 with
+          # /admin and /scim, so those stay behind the application's own authentication.
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: prometheus} # PARAMETER: the scraper's pod label
+      ports:
+        - {port: 8787, protocol: TCP}
+---
+# the Qadamar pods that use the database (server, migration, backup, restore drill): DNS and PostgreSQL only. Replicas are
+# database-less by design and are left out.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gate-egress-database
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: gate}
+    matchExpressions:
+      - {key: app.kubernetes.io/component, operator: In, values: [server, migrate, backup, restore]}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: kube-system}
+          podSelector:
+            matchLabels: {k8s-app: kube-dns}
+      ports:
+        - {port: 53, protocol: UDP}
+        - {port: 53, protocol: TCP}
+    - to:
+        - ipBlock: {cidr: 192.0.2.0/28} # PARAMETER: the tenant's managed PostgreSQL (private endpoint)
+      ports:
+        - {port: 5432, protocol: TCP}
+---
+# the server only: the organisation's IdP (OIDC), the RFC 3161 timestamp authority and the break-glass notice
+# receiver, over https
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gate-egress-idp-tsa
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - ipBlock: {cidr: 198.51.100.0/28} # PARAMETER: IdP address range
+        - ipBlock: {cidr: 203.0.113.0/28} # PARAMETER: TSA address range
+        - ipBlock: {cidr: 198.51.100.16/28} # PARAMETER: break-glass webhook receiver address range
+      ports:
+        - {port: 443, protocol: TCP}

@@ -1,0 +1,24 @@
+/* Shared visual language: the public Gate experience, console and Petra films. */
+:root {
+  --gate-bg:#f5f6f4;
+  --gate-surface:#ffffff;
+  --gate-text:#172522;
+  --gate-secondary:#636369;
+  --gate-muted:#6e6e73;
+  --gate-faint:#8b8b92;
+  --gate-line:rgba(29,29,31,.09);
+  --gate-line-strong:rgba(29,29,31,.22);
+  --gate-allow:#087f5b;
+  --gate-allow-soft:#e8f3ed;
+  --gate-deny:#b43d32;
+  --gate-deny-text:#a4372e;
+  --gate-deny-soft:#fceeea;
+  --gate-warning:#996114;
+  --gate-warning-soft:#fbf2df;
+  --gate-info:#286a91;
+  --gate-info-soft:#e9f1f8;
+  --gate-panel:#ffffff;
+  --gate-radius:22px;
+  --gate-font-sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+  --gate-font-mono:"SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}

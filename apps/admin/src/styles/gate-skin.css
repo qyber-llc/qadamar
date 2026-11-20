@@ -1,0 +1,102 @@
+@import "../../../../design/gate-brand.css";
+
+/* A calm light workspace, aligned with the Qadamar website and Petra films.
+   Semantic decision colours remain explicit; no authorization behaviour lives here. */
+html:root, html[data-theme], #app-shell-root, main.signin-splash {
+  color-scheme:light;
+  --font-sans:var(--gate-font-sans);--font-display:var(--gate-font-sans);--font-mono:var(--gate-font-mono);
+  --ds-canvas:var(--gate-bg);--ds-surface:#fff;--ds-elevated:#fff;--ds-sunken:#f8f8fa;
+  --ds-fill:#f0f0f3;--ds-fill-strong:#e7e7ec;--ds-border:#e5e5ea;--ds-border-strong:#d2d2d7;--ds-control-border:#b9b9c1;
+  --ds-text:var(--gate-text);--ds-text-secondary:var(--gate-secondary);--ds-text-tertiary:var(--gate-muted);
+  --ds-accent:var(--gate-allow);--ds-accent-text:var(--gate-allow);--ds-accent-hover:#096b48;--ds-accent-pressed:#075e3e;--ds-on-accent:#fff;
+  --ds-accent-soft:var(--gate-allow-soft);--ds-accent-soft-text:#17613f;--ds-focus:#0071e3;
+  --ds-success-text:var(--gate-allow);--ds-success-soft:var(--gate-allow-soft);
+  --ds-warning:var(--gate-warning);--ds-warning-text:#87530e;--ds-warning-soft:var(--gate-warning-soft);
+  --ds-danger:var(--gate-deny);--ds-danger-text:var(--gate-deny-text);--ds-danger-soft:var(--gate-deny-soft);--ds-on-danger:#fff;
+  --ds-shadow-ring:#1d1d1f06;--ds-shadow-key:#1d1d1f08;--ds-shadow-ambient:#1d1d1f0b;
+  --ds-elev-1:0 2px 9px #1d1d1f04;--ds-elev-2:0 8px 28px #1d1d1f08;--ds-elev-4:0 24px 80px #1d1d1f26;
+  --bg-app:var(--gate-bg);--bg-surface:#fff;--bg-subtle:#f0f0f3;--bg-code:#f5f5f7;--bg-backdrop:#1d1d1f40;
+  --text-primary:var(--ds-text);--text-secondary:var(--ds-text-secondary);--text-muted:var(--ds-text-tertiary);
+  --border-color:var(--ds-border);--border-strong:var(--ds-border-strong);--accent:var(--ds-accent);--accent-hover:var(--ds-accent-hover);--accent-subtle:var(--ds-accent-soft);--accent-contrast:#fff;--focus-ring:var(--ds-focus);
+  --allow-bg:var(--ds-success-soft);--allow-text:var(--ds-success-text);--allow-border:#cce4d5;--allow-dot:var(--ds-accent);
+  --deny-bg:var(--ds-danger-soft);--deny-text:var(--ds-danger-text);--deny-border:#edccc4;--deny-dot:var(--ds-danger);
+  --warn-bg:var(--ds-warning-soft);--warn-text:var(--ds-warning-text);--warn-border:#ecd6ad;
+  --lock-bg:#eeeef2;--lock-text:#636369;--lock-border:#d2d2d7;
+  --radius-sm:8px;--radius-md:12px;--radius-lg:22px;
+  --win-fill:#fff;--win-edge:#e5e5ea;--win-blur:none;--tile-fill:#fff;--tile-fill-hover:#fafafb;--tile-edge:#e5e5ea;--tile-hairline:#eaeaf0;--overlay-fill:#fff;
+  --gv-bg:var(--gate-bg);--gv-text:var(--gate-text);--gv-dim:var(--gate-muted);--gv-faint:#8b8b92;--gv-line:var(--gate-line);--gv-line2:var(--gate-line-strong);--gv-ok:var(--gate-allow);--gv-no:var(--gate-deny);--gv-amber:var(--gate-warning);--gv-ice:var(--gate-info);--gv-panel:#fff;--gv-panel-solid:#fff;--gv-mono:var(--gate-font-mono);
+}
+html:has(#app-shell-root,.signin-splash),body:has(#app-shell-root,.signin-splash){background:var(--gate-bg);color:var(--gate-text)}
+body:has(#app-shell-root,.signin-splash)::before{display:none}
+#app-shell-root.v24{--v24-accent:var(--gate-allow);--v24-accent-2:var(--gate-allow);--v24-accent-deep:#135139;--v24-tip:#25382d;--v24-spring:cubic-bezier(.2,.7,.2,1);--v24-ease:cubic-bezier(.2,.7,.2,1)}
+#app-shell-root::before,#app-shell-root.v24::before{border-radius:26px;border-color:#e9e9ee;box-shadow:0 12px 50px #1d1d1f05;background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
+#app-shell-root .topbar{padding:24px 30px 16px;border-bottom:1px solid #f0f0f3;background:#ffffffdc;border-radius:26px 26px 0 0}
+#app-shell-root .brand{font-size:23px;letter-spacing:-.045em;font-weight:600}
+#app-shell-root :is(h1,h2,h3,.page-title,.card-title){font-family:var(--gate-font-sans);letter-spacing:-.035em}
+#app-shell-root h1{font-size:clamp(30px,3.5vw,42px);font-weight:600;line-height:1.12}
+#app-shell-root :is(.card,.table-wrap,.notice-box,.sp-card,.v24-kpi){background:#fff;border:1px solid #e5e5ea;border-radius:20px;box-shadow:none}
+#app-shell-root :is(.card-link,.sp-card,.v24-kpi):hover{background:#fafafb;border-color:#d2d2d7;box-shadow:0 5px 24px #00000004}
+#app-shell-root :is(.modal-panel,.popover-panel,.drawer-panel){background:#fff;color:var(--gate-text);border-color:#e5e5ea;box-shadow:var(--ds-elev-4)}
+#app-shell-root :is(.modal-panel,.popover-panel){border-radius:22px}
+#app-shell-root :is(th,.operations-label,.sp-card-title,.hdr-pill small,.rail-title,.kpi-label){font-family:var(--gate-font-sans);letter-spacing:.055em;font-size:12px;font-weight:600;text-transform:uppercase;color:#6e6e73}
+#app-shell-root .table-wrap th{background:#fafafb;padding-block:15px}
+#app-shell-root .table-wrap td{padding-block:17px}
+#app-shell-root :is(select,input[type=text],input[type=search],input[type=password],input[type=number],input[type=date],textarea),main.signin-splash :is(input[type=text],input[type=password]){color:#1d1d1f;background:#fafafb;border-color:#b9b9c1;border-radius:11px;min-height:42px}
+#app-shell-root .btn,main.signin-splash .btn{border-radius:999px;min-height:38px;font-weight:500;box-shadow:none}
+#app-shell-root .btn:not(.btn-primary):not(.btn-danger){background:#f5f5f7;border-color:#dddde3;color:#414147}
+#app-shell-root .btn:not(.btn-primary):not(.btn-danger):hover:not(:disabled){background:#eaeaf0}
+#app-shell-root :is(.segmented-control,.tab-bar,.hdr-pills){background:#f2f2f5;border:0;border-radius:13px;padding:4px}
+#app-shell-root :is(.segmented-btn,.tab-btn,.hdr-pill){border-radius:10px;color:#636369}
+#app-shell-root :is(.segmented-btn[aria-selected=true],.tab-btn[aria-selected=true],.tab-btn.active){background:#fff;color:var(--gate-allow);box-shadow:0 2px 7px #0000000b}
+#app-shell-root .badge{border-radius:8px}
+#app-shell-root.v24 .v24-rail-pill{border-radius:24px;color:#343438}
+#app-shell-root.v24 .v24-rail-pill::before{border-color:#e5e5ea;background:#f9f9fbeb;box-shadow:0 5px 24px #00000004;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#app-shell-root.v24 .v24-rail-btn{color:#636369;border-radius:12px}
+#app-shell-root.v24 .v24-rail-btn:hover{background:#ebebf0}
+#app-shell-root.v24 .v24-rail-btn.on{background:#e8f3ed;color:#0c6943}
+#app-shell-root.v24 .v24-tile{background:#f0f0f4;color:#727279;border-radius:11px;box-shadow:none}
+#app-shell-root.v24 .v24-rail-btn.on .v24-tile{background:#d7eadd;color:var(--gate-allow);box-shadow:none}
+#app-shell-root.v24 :is(.rail-search,.v24-lang){background:#eaeaf0;border-radius:12px;color:#636369}
+#app-shell-root.v24 .rail-search input{background:transparent;border:0;min-height:32px;color:#343438}
+#app-shell-root.v24 .rail-search input::placeholder{color:#6e6e73}
+#app-shell-root.v24 :is(.rail-status,.rail-switch,.rail-who small,.rail-status small,.rail-section,.rail-kbd){color:#636369}
+#app-shell-root.v24 .rail-chip{color:#17613f;background:#e1eee5;box-shadow:none}
+#app-shell-root.v24 .rail-foot{border-color:#e0e0e5}
+#app-shell-root.v24 .rail-toggle{background:#fff;border:1px solid #e5e5ea;color:#636369;box-shadow:0 2px 10px #0000000b}
+#app-shell-root.v24 .v24-lang button[aria-pressed=true]{background:#fff;color:#087f52;box-shadow:0 2px 5px #0000000a}
+#app-shell-root.v24 .v24-hero{border-radius:24px;background:linear-gradient(125deg,#103b28,#0b2119);border:0;color:#fff;box-shadow:none}
+#app-shell-root.v24 .v24-hero :is(h1,h2,h3){color:#fff}
+#app-shell-root.v24 .hero-cta .btn.v24-btn-light{background:#fff;color:#145a39;border-radius:999px}
+#app-shell-root.v24 .v24-hero :is(.hero-tag,.kpi-flag){border-radius:999px}
+#app-shell-root .mx-granted .mx-step-model{color:#d8eade}
+main.signin-splash{background:radial-gradient(ellipse at 50% 35%,#edf4ef,#f5f5f7 65%)}
+main.signin-splash .signin-card{background:#fff;border:1px solid #e5e5ea;border-radius:28px;box-shadow:0 25px 80px #1d1d1f09;padding:36px}
+main.signin-splash label{font-family:var(--gate-font-sans);font-size:12px;font-weight:600;letter-spacing:.05em;color:#636369}
+main.signin-splash .brand-tag{color:#636369;background:#f5f5f7;border-radius:8px}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){#app-shell-root.v24 .v24-rail-pill::before{background:#f9f9fb;backdrop-filter:none;-webkit-backdrop-filter:none}#app-shell-root,.signin-splash{--ds-text-tertiary:#4d4d54;--ds-border-strong:#a2a2ab}}
+@media(max-width:700px){#app-shell-root::before,#app-shell-root.v24::before{border-radius:18px}#app-shell-root .topbar{padding:18px 20px 14px}#app-shell-root :is(th,.operations-label,.sp-card-title){font-size:11px}main.signin-splash .signin-card{padding:28px}}
+/* A short, quiet arrival instead of the former dark cinematic veil. */
+.v24-boot{background:#f5f5f7;clip-path:none;animation:gate-arrival .35s ease .65s forwards}
+.v24-boot .boot-stage{color:#1d1d1f;animation:none}
+.v24-boot .boot-logo{color:#087f52;filter:none}
+.v24-boot .boot-word{font-size:28px;letter-spacing:-.04em;font-weight:600}
+.v24-boot .boot-tag{color:#6e6e73;letter-spacing:.04em;text-transform:none}
+.v24-boot .boot-bar{background:#dedee4}
+.v24-boot .boot-bar i{background:#087f52}
+@keyframes gate-arrival{to{opacity:0;visibility:hidden}}
+@media(prefers-reduced-motion:reduce){.v24-boot{display:none}}
+@media(max-width:900px){
+  #app-shell-root.v24 .v24-rail.mobile-open{position:fixed;top:82px;max-height:calc(100dvh - 100px)}
+  #app-shell-root.v24 .v24-rail.mobile-open .v24-rail-pill{max-height:calc(100dvh - 100px);background:#f9f9fb;border:1px solid #e0e0e5;box-shadow:0 18px 65px #1d1d1f22;overflow:hidden}
+  #app-shell-root.v24 .v24-rail.mobile-open .v24-rail-pill::before{display:none}
+  #app-shell-root.v24 .v24-rail.mobile-open .rail-list{overflow-y:auto;min-height:0}
+}
+#app-shell-root.v24 .kpi-ic{color:#087f52;background:#e8f3ed;box-shadow:none;border-radius:12px}
+#app-shell-root.v24 .v24-kpi:hover .kpi-ic{transform:none}
+#app-shell-root.v24 .v24-kpi[data-attention=true] .kpi-ic{color:#87530e;background:#fbf2df}
+#app-shell-root.v24 .kpi-flag{color:#87530e;background:#fbf2df;box-shadow:inset 0 0 0 1px #ecd6ad}
+#app-shell-root.v24 .rail-logo{background:#087f52;box-shadow:none}
+#app-shell-root.v24 .v24-rail-btn.on .v24-tile{box-shadow:none}
+#app-shell-root.v24 .v24-rail-ind{display:none}
+#app-shell-root.v24 .v24-rail-btn{animation:none;transition:background-color .18s,color .18s}
+#app-shell-root.v24 .rail-brand{animation:none}

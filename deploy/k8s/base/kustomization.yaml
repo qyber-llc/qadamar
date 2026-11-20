@@ -1,0 +1,36 @@
+# Qadamar, one dedicated instance per customer: everything a tenant runs, in its own namespace.
+# Values marked PARAMETER are owner/cloud decisions; a per-cloud overlay patches them (docs/MANAGED-OFFER.md §4).
+# Secrets are referenced, never defined here: scripts/managed/new-tenant.sh creates them.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gate-tenant # scripts/managed/new-tenant.sh sets gate-<tenant>
+resources:
+  - namespace.yaml
+  - gate.yaml
+  - network-policies.yaml
+  - jobs.yaml
+configMapGenerator:
+  - name: gate-config
+    literals:
+      - PUBLIC_ORIGIN=https://tenant.gate.example.invalid # PARAMETER: the tenant's public https origin (same host as the Ingress)
+      # every start runs the production checks (docs/DEPLOY.md §5): OIDC with MFA, TSA, break-glass webhook, least-privilege role...
+      - GATE_PROFILE=production
+      # Managed PostgreSQL must present a certificate chaining to the system store or gate-postgres-tls/ca.crt and naming this host.
+      - DATABASE_TLS=verify-full
+      - SOD_HISTORY=server
+      - BLP_SESSION_REQUIRED=true # PEPs send context.sessionId (docs/API.md §2, session high-water mark)
+      # PARAMETER: the tenant's first-start world (world.json and bundle.json, e.g. a mounted ConfigMap): the image's
+      # WORLD_DIR is the fictional toy world, which GATE_PROFILE=production refuses to seed from (docs/DEPLOY.md §5)
+      # - WORLD_DIR=/etc/gate/world
+      # PARAMETER: the ingress controller pods' address range (the cluster's pod CIDR, or the controller's node or load
+      # balancer addresses). X-Forwarded-For is read only from these peers (docs/DEPLOY.md, TRUSTED_PROXIES); the
+      # NetworkPolicy gate-ingress lets only the ingress and scraper namespaces connect at all.
+      - TRUSTED_PROXIES=192.0.2.64/26
+images:
+  # PARAMETER: registry, and a digest instead of a tag, per release
+  - name: gate
+    newName: registry.example.invalid/gate
+    newTag: 0.12.2
+  - name: gate-ops
+    newName: registry.example.invalid/gate-ops
+    newTag: 0.12.2

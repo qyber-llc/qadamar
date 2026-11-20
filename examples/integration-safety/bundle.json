@@ -1,0 +1,80 @@
+{
+  "name": "filter-example",
+  "schema": {
+    "compartments": [],
+    "resourceTypes": {
+      "case": {
+        "actions": {
+          "review": {
+            "kind": "read",
+            "requiresSecondPerson": true
+          },
+          "author": {
+            "kind": "write"
+          }
+        }
+      }
+    }
+  },
+  "rbac": {
+    "roles": {
+      "reviewer": {
+        "grants": [
+          {
+            "resourceType": "case",
+            "actions": [
+              "review"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "mandatory": {
+    "trustedRoles": [],
+    "untrustedNetworkMaxLevel": 0,
+    "compartmentsRequireTrustedNetwork": true,
+    "bibaNoReadDownActions": []
+  },
+  "needToKnow": {
+    "mode": "off",
+    "protect": {},
+    "breakGlassMaxHours": 4,
+    "breakGlassNotify": []
+  },
+  "abac": [
+    {
+      "id": "projection",
+      "description": "Redact secrets",
+      "effect": "obligation",
+      "resourceTypes": [
+        "case"
+      ],
+      "actions": [
+        "review"
+      ],
+      "when": {
+        "op": "true"
+      },
+      "obligations": {
+        "redact": [
+          "secret"
+        ]
+      }
+    }
+  ],
+  "abacContent": [],
+  "sod": [
+    {
+      "id": "author-review",
+      "conflicting": [
+        "author",
+        "review"
+      ],
+      "description": "Authors cannot review"
+    }
+  ],
+  "clarkWilson": {
+    "tokenTtlSeconds": 15
+  }
+}

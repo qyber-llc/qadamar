@@ -1,0 +1,49 @@
+{
+  "voice": "Petra",
+  "voice_id": "0c63637d-2ecb-5bda-9bbe-38894aa9a876",
+  "model": "seed_audio",
+  "generated_replacements": [
+    {
+      "film": "models",
+      "scene": 0,
+      "id": "intro",
+      "text": "Who may see what? Seven models answer it, each from a different angle. Qadamar combines them in one decision.",
+      "job_id": "53337e40-8ac9-48e7-a827-62b42511e158"
+    },
+    {
+      "film": "models",
+      "scene": 9,
+      "id": "outro",
+      "text": "These are the models classified defence systems were built on. Qadamar brings them together in one self-hosted engine.",
+      "job_id": "7ecc9eba-4ff0-43d9-b7d2-d166d232f8b9"
+    },
+    {
+      "film": "sectors",
+      "scene": 0,
+      "id": "intro",
+      "text": "Every day, regulated organisations decide who may see what. Qadamar makes each of those decisions, explains it, and records it.",
+      "job_id": "48d6a66c-3c22-42eb-adcb-7b667741ed34"
+    },
+    {
+      "film": "sectors",
+      "scene": 7,
+      "id": "outro",
+      "text": "Qadamar. Self-hosted access control for regulated organisations.",
+      "job_id": "9661f2a5-8ab6-4535-896c-3c2edb26e680"
+    },
+    {
+      "film": "usecases",
+      "scene": 0,
+      "id": "intro",
+      "text": "Qadamar decides, on every request, who may see or do what. And it keeps a record of every decision.",
+      "job_id": "6b5f0803-bbd9-4a53-a489-c2dd9d337599"
+    },
+    {
+      "film": "usecases",
+      "scene": 8,
+      "id": "fin",
+      "text": "Your access rules in one place, instead of scattered through the code. Qadamar.",
+      "job_id": "c25ea844-5438-454d-9325-d054964fbc87"
+    }
+  ]
+}

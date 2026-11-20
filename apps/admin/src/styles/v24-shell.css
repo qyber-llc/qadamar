@@ -1,0 +1,568 @@
+/* Adapted from CodeXR Glassy Dashboard v24 (purchased by the owner) — styles/base.css, shell.css.
+   The v24 shell on carbon: the brand green through the template's accent mechanism, the sidebar that folds into a
+   magnifying dock (visual direction after CodeXR's Glassy Sidebar V7: a floating glass card, coloured squircle
+   tiles, a search field, the audit chain and the motion switch), the intro, card entrances, page transitions,
+   press ripples, magnetic buttons, odometer numbers. System fonts only; nothing is fetched. */
+
+#app-shell-root.v24 {
+  /* the template's accent trio, set to the owner's green; accent-2 is the light green that reads on carbon */
+  --v24-accent: #008235;
+  --v24-accent-2: #5fd08a;
+  --v24-accent-deep: #005c25;
+  --v24-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --v24-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --v24-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --v24-ease-soft: cubic-bezier(0.32, 0.72, 0, 1);
+  --v24-tip: rgba(24, 27, 25, 0.94);
+  --rail-w: 68px;
+  margin-inline-start: calc(var(--rail-w) + 32px);
+  transition: margin-inline-start 0.7s var(--v24-ease-soft);
+}
+#app-shell-root.v24.rail-open { --rail-w: 288px; }
+#app-shell-root.v24::before {
+  border-radius: 40px;
+  animation: v24-fade 1s var(--v24-ease) calc(var(--base, 0ms) * 0.83) backwards;
+}
+@keyframes v24-fade { from { opacity: 0; } }
+
+/* line icons drawn with the current colour */
+.v24-rail svg, .v24-kpi .kpi-ic svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------------- sidebar: open glass card ⇄ folded dock ---------------- */
+.v24-rail {
+  position: fixed;
+  top: 16px;
+  inset-inline-start: 16px;
+  z-index: 30;
+  width: var(--rail-w);
+  transition: width 0.7s var(--v24-ease-soft);
+}
+.v24-rail-pill {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100dvh - 32px);
+  padding: 48px 9px 9px;
+  border-radius: 34px;
+  color: #fff;
+  transform-origin: top center;
+  animation: v24-rail-rise 1s var(--v24-ease-out) calc(var(--base, 0ms) * 0.93) backwards;
+  transition: padding 0.7s var(--v24-ease-soft), border-radius 0.7s var(--v24-ease-soft);
+}
+/* glass is painted on ::before so the pill can move without becoming a backdrop root */
+.v24-rail-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--v24-accent) 7%, rgba(26, 29, 27, 0.6));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), 0 30px 70px -30px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(30px) saturate(1.5);
+  backdrop-filter: blur(30px) saturate(1.5);
+  pointer-events: none;
+}
+@keyframes v24-rail-rise { from { transform: translateX(-26px) scaleY(0.88); opacity: 0; } }
+.v24-rail.open .v24-rail-pill { padding: 14px 12px 12px; border-radius: 28px; }
+
+/* header: the app's squircle, its name, the air-gapped chip (open only) */
+.rail-brand { display: none; align-items: center; gap: 10px; padding-block: 2px 4px; padding-inline: 2px 6px; white-space: nowrap; }
+.v24-rail.open .rail-brand { display: flex; animation: v24-rise 0.5s var(--v24-ease) 0.15s both; }
+.rail-logo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(150deg, #13a052, var(--v24-accent-deep));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 22px -4px color-mix(in srgb, var(--v24-accent) 75%, transparent);
+}
+.rail-brand b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; }
+.rail-chip {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9ae6b6;
+  background: rgba(95, 208, 138, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(95, 208, 138, 0.35);
+}
+
+/* search (open): filters the screens */
+.rail-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding-block: 0; padding-inline: 12px 6px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: v24-rise 0.5s var(--v24-ease) 0.2s both;
+}
+.rail-search:focus-within { box-shadow: inset 0 0 0 2px var(--v24-accent-2); }
+.rail-search > svg { width: 16px; height: 16px; flex-shrink: 0; color: rgba(255, 255, 255, 0.75); }
+#app-shell-root .rail-search input {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rail-search input::placeholder { color: rgba(255, 255, 255, 0.66); }
+.rail-search input::-webkit-search-cancel-button { display: none; }
+.rail-kbd {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 7px;
+  font: 600 11px var(--font-sans);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* the screens: scrolls inside the card when the window is short (open only) */
+.rail-list { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.v24-rail.open .rail-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 2px;
+  margin: 0 -6px;
+  padding: 0 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.rail-group, .rail-group ul { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.v24-rail.open :is(.rail-group, .rail-group ul) { gap: 2px; }
+
+/* section titles: a short divider when folded, small capitals when open */
+.rail-title {
+  align-self: center;
+  width: 26px;
+  height: 1px;
+  margin: 2px 0;
+  overflow: hidden;
+  font-size: 0;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.28);
+  transition: width 0.7s var(--v24-ease-soft), height 0.7s var(--v24-ease-soft), margin 0.7s var(--v24-ease-soft), background-color 0.3s;
+}
+.v24-rail.open .rail-title { align-self: stretch; width: auto; height: 24px; margin: 8px 8px 0; font-size: 11px; line-height: 24px; background: transparent; }
+.rail-empty { margin: 6px 8px; font-size: 12.5px; color: rgba(255, 255, 255, 0.75); }
+
+/* rows: a 50px circle folded, a full-width row open */
+.v24-rail-btn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  padding: 0 9px;
+  border-radius: 25px;
+  color: #fff;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 520;
+  white-space: nowrap;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transform-origin: 50% 50%;
+  transition: background-color 0.25s, width 0.7s var(--v24-ease-soft), height 0.7s var(--v24-ease-soft), border-radius 0.7s var(--v24-ease-soft);
+  animation: v24-slide-right 0.7s var(--v24-ease-soft) both;
+  animation-delay: calc(var(--base, 0ms) + 200ms + var(--i, 0) * 50ms);
+}
+.v24-rail-btn:hover { color: #fff; text-decoration: none; }
+a.v24-rail-btn:hover:not(.on), button.v24-rail-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.v24-rail-btn:focus-visible { outline: 2px solid var(--v24-accent-2); outline-offset: 2px; }
+.v24-rail.open .v24-rail-btn { width: 100%; height: 44px; padding: 0 7px; border-radius: 14px; }
+.v24-rail-btn > :is(.v24-tile, svg, .rail-avatar) { position: relative; z-index: 1; flex-shrink: 0; transition: transform 0.3s var(--v24-spring); }
+.v24-rail-btn:active > :is(.v24-tile, svg) { transform: scale(0.86); }
+.rail-label {
+  position: relative;
+  z-index: 1;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: max-width 0.7s var(--v24-ease-soft), opacity 0.2s;
+}
+.v24-rail.open .rail-label { max-width: 180px; opacity: 1; transition: max-width 0.7s var(--v24-ease-soft), opacity 0.4s 0.18s; }
+
+/* iOS-style squircle tiles, one hue per screen, white glyph */
+.v24-tile {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tile, #5c6673) 78%, #fff), var(--tile, #5c6673) 70%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 12px -5px color-mix(in srgb, var(--tile, #5c6673) 80%, transparent);
+}
+.v24-tile svg { width: 18px; height: 18px; }
+.v24-tile.glass { background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+.v24-rail-btn.on .v24-tile { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 18px -2px color-mix(in srgb, var(--v24-accent-2) 70%, transparent); }
+
+/* the macOS Dock (folded only): JS eases --m (size) and --g (room) per icon, each grows from its own centre */
+.v24-rail:not(.open) [data-dock] { scale: var(--m, 1); margin-block: calc(var(--g, 0px) / 2); }
+
+/* the lighter glass pill that marks the current screen */
+.v24-rail-ind {
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 8px 22px -10px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  transition: opacity 0.3s, border-radius 0.7s var(--v24-ease-soft);
+}
+.v24-rail.open .v24-rail-ind { border-radius: 14px; }
+
+/* count pill: a red dot on the tile folded, a glass pill on the right open */
+.rail-badge {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 31px;
+  z-index: 2;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: #c9363b;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-style: normal;
+  animation: v24-pop-in 0.5s var(--v24-spring);
+}
+.v24-rail.open .rail-badge {
+  position: relative;
+  top: auto;
+  inset-inline-start: auto;
+  margin-inline-start: auto;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 11.5px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+/* status card (the audit chain) and the motion switch: open only */
+.rail-status, .rail-switch { display: none; }
+.v24-rail.open .rail-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-radius: 16px;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: background-color 0.25s;
+  animation: v24-rise 0.5s var(--v24-ease) 0.25s both;
+}
+.v24-rail.open a.rail-status:hover { background: rgba(255, 255, 255, 0.12); text-decoration: none; }
+.rail-status[data-tone="ok"] { --tile: var(--v24-accent); }
+.rail-status[data-tone="bad"] { --tile: #c9363b; }
+.rail-status[data-tone="ok"] .v24-tile { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 16px -3px color-mix(in srgb, var(--v24-accent-2) 70%, transparent); }
+.rail-status b, .rail-status small { display: block; }
+.rail-status b { font-size: 12.5px; font-weight: 620; }
+.rail-status small { font-size: 11.5px; color: rgba(255, 255, 255, 0.74); font-variant-numeric: tabular-nums; }
+.v24-rail.open .rail-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-block: 2px; padding-inline: 10px 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.88);
+}
+.v24-switch {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background-color 0.25s, box-shadow 0.25s;
+}
+.v24-switch i { position: absolute; top: 2px; inset-inline-start: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); transition: translate 0.4s var(--v24-spring); }
+.v24-switch[aria-checked="true"] { background: var(--v24-accent); box-shadow: 0 0 14px -2px color-mix(in srgb, var(--v24-accent-2) 70%, transparent); }
+.v24-switch[aria-checked="true"] i { translate: 16px 0; }
+.v24-switch:focus-visible { outline: 2px solid var(--v24-accent-2); outline-offset: 2px; }
+
+/* you: initials, name and roles, sign out */
+.rail-foot { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.rail-foot::before { content: ""; align-self: center; width: 26px; height: 1px; margin: 2px 0; background: rgba(255, 255, 255, 0.28); }
+.v24-rail.open .rail-foot { flex-direction: row; align-items: center; gap: 4px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+.v24-rail.open .rail-foot::before { display: none; }
+.rail-user { cursor: default; padding: 0 7px; gap: 10px; }
+.v24-rail.open .rail-user { flex: 1; min-width: 0; height: 52px; padding: 0 4px; }
+.rail-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(150deg, #0d8f43, var(--v24-accent-deep));
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.3);
+}
+.rail-who { display: grid; min-width: 0; }
+.rail-who b, .rail-who small { overflow: hidden; text-overflow: ellipsis; }
+.rail-who b { font-size: 13.5px; font-weight: 620; }
+.rail-who small { font-size: 11.5px; font-weight: 400; color: rgba(255, 255, 255, 0.74); }
+.rail-signout { justify-content: center; padding: 0; }
+.rail-signout svg { width: 20px; height: 20px; }
+.v24-rail.open .rail-signout { width: 40px; height: 40px; padding: 0; border-radius: 12px; }
+
+/* the round toggle: at the top of the dock when folded, on the card's top edge when open */
+.rail-toggle {
+  --mg-x: 0px;
+  --mg-y: 0px;
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 19px;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #141414;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  translate: var(--mg-x) var(--mg-y);
+  transition: top 0.7s var(--v24-ease-soft), inset-inline-end 0.7s var(--v24-ease-soft), transform 0.4s var(--v24-spring), translate 0.45s var(--v24-ease);
+  animation: v24-pop-in 0.6s var(--v24-spring) calc(var(--base, 0ms) + 900ms) both;
+}
+.rail-toggle:hover { transform: scale(1.14); }
+.rail-toggle:active { transform: scale(0.88); }
+.rail-toggle:focus-visible { outline: 2px solid var(--v24-accent-2); outline-offset: 3px; }
+.rail-toggle svg { width: 16px; height: 16px; stroke-width: 2.4; transition: rotate 0.6s var(--v24-spring); }
+.v24-rail:not(.open) .rail-toggle svg { rotate: 180deg; }
+.v24-rail.open .rail-toggle { top: 22px; inset-inline-end: -15px; }
+
+/* tooltips (folded only): glass, readable while their icon is magnified */
+.v24-rail-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  inset-inline-start: calc(100% + 16px);
+  top: 50%;
+  translate: -6px -50%;
+  scale: calc(1 / var(--m, 1));
+  transform-origin: left center;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: var(--v24-tip);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 34px -14px rgba(0, 0, 0, 0.7);
+  font-size: 12.5px;
+  font-weight: 520;
+  white-space: pre;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s, translate 0.3s var(--v24-ease);
+}
+.v24-rail:not(.open) .v24-rail-btn[data-tip]:is(:hover, :focus-visible)::after { opacity: 1; translate: 0 -50%; }
+.v24-rail.open .v24-rail-btn[data-tip]::after { display: none; }
+
+/* short screens: a tighter dock */
+@media (max-height: 820px) and (min-width: 861px) {
+  .v24-rail:not(.open) :is(.rail-list, .rail-group, .rail-group ul, .v24-rail-pill) { gap: 4px; }
+  .v24-rail:not(.open) .v24-rail-btn { width: 50px; height: 44px; }
+}
+
+/* ---------------- page: entrances, transitions ---------------- */
+.v24-page { animation: v24-page-in 0.5s var(--v24-ease-out) backwards; }
+.main-content.leaving .v24-page { animation: v24-page-out 0.22s ease-in both; }
+@keyframes v24-page-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes v24-page-out { to { opacity: 0; transform: translateY(12px) scale(0.985); } }
+
+/* cards rise out of the glass and tilt up: transform and opacity only */
+#app-shell-root [data-reveal] { opacity: 0; }
+#app-shell-root [data-reveal].in { animation: v24-card-in 0.95s var(--v24-ease-out) calc(var(--base, 0ms) + var(--i, 0) * 70ms) both; }
+#app-shell-root [data-reveal].shown { opacity: 1; animation: none; }
+@keyframes v24-card-in {
+  0% { opacity: 0; transform: perspective(1400px) translateY(48px) rotateX(14deg) scale(0.95); }
+  55% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+#app-shell-root .card { border-radius: 26px; }
+
+/* the page title: words rise in one after another */
+.words .w { display: inline-block; animation: v24-word-in 0.9s var(--v24-ease-out) both; animation-delay: calc(var(--base, 0ms) + 120ms + var(--w) * 90ms); }
+@keyframes v24-word-in { from { opacity: 0; transform: translateY(0.55em) rotate(4deg); filter: blur(10px); } }
+.v24-sub { animation: v24-rise 0.8s var(--v24-ease) calc(var(--base, 0ms) + 450ms) both; }
+
+/* ---------------- tactile: ripple, magnetic ---------------- */
+#app-shell-root .btn, .v24-press { position: relative; overflow: hidden; isolation: isolate; }
+.v24-ripple { position: absolute; border-radius: 50%; background: currentColor; pointer-events: none; z-index: 0; }
+.v24-mag { --mg-x: 0px; --mg-y: 0px; translate: var(--mg-x) var(--mg-y); }
+.btn.v24-mag { transition: translate 0.45s var(--v24-ease), transform 0.3s var(--v24-spring), background-color 150ms, border-color 150ms; }
+
+/* ---------------- odometer: one reel per digit ---------------- */
+.odo { display: inline-flex; align-items: flex-start; font-variant-numeric: tabular-nums; line-height: 1.12; white-space: nowrap; }
+.odo-col {
+  display: inline-block;
+  height: 1.12em;
+  overflow: hidden;
+  -webkit-mask: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  mask: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+}
+.odo-reel { display: flex; flex-direction: column; transform: translateY(calc(var(--n) * -1.12em)); transition: transform 2s var(--v24-ease-out); transition-delay: calc(var(--k) * 70ms); }
+.odo.settled .odo-reel { transition-duration: 1s; transition-delay: calc(var(--k) * 30ms); }
+.odo-reel > span { display: block; height: 1.12em; text-align: center; }
+.odo-fix { margin-inline-start: 0.04em; }
+
+/* ---------------- intro: the mark draws itself, the name rises, an iris opens onto the carbon ---------------- */
+@property --iris { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.v24-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 45%, rgba(0, 92, 37, 0.35), transparent 60%), rgba(6, 8, 7, 0.95);
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--iris), #000 calc(var(--iris) + 120px));
+  mask: radial-gradient(circle at 50% 50%, transparent var(--iris), #000 calc(var(--iris) + 120px));
+  animation: v24-iris 1.5s cubic-bezier(0.7, 0, 0.2, 1) 1.15s both, v24-boot-fade 0.5s ease 2.4s forwards;
+  pointer-events: none;
+}
+@keyframes v24-iris { to { --iris: 150vmax; } }
+@keyframes v24-boot-fade { to { opacity: 0; } }
+.boot-stage { display: grid; justify-items: center; gap: 14px; color: #eef4f0; animation: v24-stage-out 0.6s cubic-bezier(0.6, 0, 0.4, 1) 1.05s both; }
+@keyframes v24-stage-out { to { opacity: 0; transform: scale(1.5); filter: blur(12px); } }
+.boot-logo { color: #3fbf73; filter: drop-shadow(0 0 24px rgba(0, 130, 53, 0.7)); }
+.boot-logo .logo-stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: v24-draw 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards; }
+.boot-logo .logo-stroke.two { animation-delay: 0.28s; }
+.boot-logo .logo-dot { transform-box: fill-box; transform-origin: center; animation: v24-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s both; }
+@keyframes v24-draw { to { stroke-dashoffset: 0; } }
+.boot-word { display: flex; margin: 0 -0.24em 0 0; font-family: var(--font-sans); font-size: clamp(18px, 4.6vw, 28px); font-weight: 700; letter-spacing: 0.24em; }
+.boot-word span { display: inline-block; animation: v24-letter-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(0.3s + var(--c) * 0.04s); }
+@keyframes v24-letter-in { from { opacity: 0; transform: translateY(18px) rotateX(70deg); filter: blur(8px); } }
+.boot-tag { margin: 0; font-size: 12.5px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(238, 244, 240, 0.72); animation: v24-rise 0.6s ease 0.6s both; }
+.boot-bar { width: 140px; height: 2px; margin-top: 6px; overflow: hidden; border-radius: 2px; background: rgba(255, 255, 255, 0.12); }
+.boot-bar i { display: block; height: 100%; background: linear-gradient(90deg, #5fd08a, #008235); transform-origin: left; animation: v24-bar 0.95s cubic-bezier(0.6, 0, 0.2, 1) 0.1s both; }
+@keyframes v24-bar { from { transform: scaleX(0); } }
+
+/* ---------------- shared keyframes ---------------- */
+@keyframes v24-pop-in { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; } }
+@keyframes v24-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes v24-slide-right { from { opacity: 0; transform: translateX(calc(-14px * var(--inline-flow))) scale(0.85); } }
+
+/* ---------------- phone and narrow screens: the card opens as a menu ---------------- */
+@media (min-width: 861px) { .v24-phone-only { display: none !important; } }
+@media (max-width: 860px) {
+  #app-shell-root.v24 { margin-inline-start: 10px; }
+  .v24-rail { display: none; }
+  .v24-rail.mobile-open { display: block; position: absolute; top: 64px; inset-inline-end: 10px; inset-inline-start: 10px; z-index: 40; width: auto; animation: win-pop 0.34s cubic-bezier(0.34, 1.32, 0.64, 1); }
+  .v24-rail .v24-rail-pill { max-height: none; }
+  .v24-rail .v24-rail-pill::before { background: rgba(22, 25, 23, 0.96); }
+  .v24-rail :is(.rail-toggle, .rail-kbd) { display: none; }
+}
+
+/* ---------------- preferences ---------------- */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .v24-rail-pill::before { background: #151816; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .rail-search input::placeholder { color: rgba(255, 255, 255, 0.8); }
+}
+/* the system setting or the console's own switch: no intro, no tilt, no rolls, no entrances */
+@media (prefers-reduced-motion: reduce) {
+  #app-shell-root::before, #app-shell-root *, #app-shell-root *::before, #app-shell-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  .v24-boot { display: none; }
+}
+html[data-motion="reduced"] #app-shell-root,
+html[data-motion="reduced"] #app-shell-root::before,
+html[data-motion="reduced"] #app-shell-root *,
+html[data-motion="reduced"] #app-shell-root *::before,
+html[data-motion="reduced"] #app-shell-root *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+}
+html[data-motion="reduced"] .v24-boot { display: none; }
+
+/* language switch: EN / FR / العربية, a segmented pill beside the motion switch */
+.v24-lang { display: inline-flex; gap: 2px; padding: 2px; border-radius: 14px; background: rgba(255, 255, 255, 0.22); }
+.v24-lang button {
+  min-width: 34px;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+.v24-lang button[aria-pressed="true"] { background: var(--v24-accent); color: #fff; }
+.v24-lang button:focus-visible { outline: 2px solid var(--v24-accent-2); outline-offset: 2px; }

@@ -1,0 +1,218 @@
+{
+  "demo": true,
+  "_note": "OpenID AuthZEN Todo interop fixture. Encoded and email subject IDs are directory aliases; ownership comes from this PDP snapshot, not request properties.",
+  "now": "2026-11-08T10:00:00Z",
+  "subjects": [
+    {
+      "type": "user",
+      "id": "CiRmZDA2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs",
+      "active": true,
+      "roles": ["admin", "evil_genius"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Rick Sanchez", "email": "rick@the-citadel.com" }
+    },
+    {
+      "type": "user",
+      "id": "rick@the-citadel.com",
+      "active": true,
+      "roles": ["admin", "evil_genius"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Rick Sanchez", "email": "rick@the-citadel.com" }
+    },
+    {
+      "type": "user",
+      "id": "CiRmZDE2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs",
+      "active": true,
+      "roles": ["editor"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Morty Smith", "email": "morty@the-citadel.com" }
+    },
+    {
+      "type": "user",
+      "id": "morty@the-citadel.com",
+      "active": true,
+      "roles": ["editor"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Morty Smith", "email": "morty@the-citadel.com" }
+    },
+    {
+      "type": "user",
+      "id": "CiRmZDI2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs",
+      "active": true,
+      "roles": ["editor"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Summer Smith", "email": "summer@the-smiths.com" }
+    },
+    {
+      "type": "user",
+      "id": "summer@the-smiths.com",
+      "active": true,
+      "roles": ["editor"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Summer Smith", "email": "summer@the-smiths.com" }
+    },
+    {
+      "type": "user",
+      "id": "CiRmZDM2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs",
+      "active": true,
+      "roles": ["viewer"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Beth Smith", "email": "beth@the-smiths.com" }
+    },
+    {
+      "type": "user",
+      "id": "beth@the-smiths.com",
+      "active": true,
+      "roles": ["viewer"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Beth Smith", "email": "beth@the-smiths.com" }
+    },
+    {
+      "type": "user",
+      "id": "CiRmZDQ2MTRkMy1jMzlhLTQ3ODEtYjdiZC04Yjk2ZjVhNTEwMGQSBWxvY2Fs",
+      "active": true,
+      "roles": ["viewer"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Jerry Smith", "email": "jerry@the-smiths.com" }
+    },
+    {
+      "type": "user",
+      "id": "jerry@the-smiths.com",
+      "active": true,
+      "roles": ["viewer"],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": { "name": "Jerry Smith", "email": "jerry@the-smiths.com" }
+    }
+  ],
+  "resources": [
+    {
+      "type": "user",
+      "id": "rick@the-citadel.com",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "rick@the-citadel.com",
+      "contentClasses": []
+    },
+    {
+      "type": "user",
+      "id": "morty@the-citadel.com",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "morty@the-citadel.com",
+      "contentClasses": []
+    },
+    {
+      "type": "user",
+      "id": "summer@the-smiths.com",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "summer@the-smiths.com",
+      "contentClasses": []
+    },
+    {
+      "type": "user",
+      "id": "beth@the-smiths.com",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "beth@the-smiths.com",
+      "contentClasses": []
+    },
+    {
+      "type": "user",
+      "id": "jerry@the-smiths.com",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "jerry@the-smiths.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "todo-1",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "rick@the-citadel.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "7240d0db-8ff0-41ec-98b2-34a096273b91",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "morty@the-citadel.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "7240d0db-8ff0-41ec-98b2-34a096273b92",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "rick@the-citadel.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "7240d0db-8ff0-41ec-98b2-34a096273b93",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "summer@the-smiths.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "7240d0db-8ff0-41ec-98b2-34a096273b94",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "beth@the-smiths.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "7240d0db-8ff0-41ec-98b2-34a096273b95",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "jerry@the-smiths.com",
+      "contentClasses": []
+    },
+    {
+      "type": "todo",
+      "id": "240d0db-8ff0-41ec-98b2-34a096273b95",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "jerry@the-smiths.com",
+      "contentClasses": []
+    }
+  ],
+  "tuples": []
+}

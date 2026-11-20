@@ -1,0 +1,17 @@
+{
+  "name": "Qadamar",
+  "publisher": "Qyber LLC",
+  "tagline": "Every access decision. Explained.",
+  "colors": {
+    "ink": "#172522",
+    "green": "#087F5B",
+    "mint": "#83D7B4",
+    "porcelain": "#F5F6F4",
+    "muted": "#65736D"
+  },
+  "fontFamily": "-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif",
+  "radius": {
+    "card": 24,
+    "control": 12
+  }
+}

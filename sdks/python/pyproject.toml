@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qadamar"
+version = "0.1.0"
+description = "Qadamar PEP SDK: PDP client, obligation enforcement and decision-assertion verification"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+dependencies = []
+
+[tool.setuptools]
+packages = ["qadamar"]

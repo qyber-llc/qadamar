@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.hex-skills/
+*.log
+data/runtime/
+__pycache__/
+*.egg-info/
+.ci-bin/
+
+# Lean build outputs of the formal model (formal/, docs/spec/FORMAL-MODEL.md)
+formal/.lake/
+
+# Review scratch space (docs/handbook/maintenance/review-runbook.md)
+tmp/
+node_modules

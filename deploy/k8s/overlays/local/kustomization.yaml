@@ -1,0 +1,70 @@
+# LOCAL TEST ONLY (OrbStack, kind, Docker Desktop). The tenant runs GATE_PROFILE=production for real, against stand-ins
+# for what a customer's environment provides: in-cluster PostgreSQL without HA, a test OIDC provider that asserts MFA,
+# a test RFC 3161 authority and a break-glass receiver (test-services.yaml), a throwaway test CA, Qadamar serving TLS
+# itself with a self-signed certificate (no Ingress: kubectl port-forward to https://localhost:18787), images built
+# on this machine (scripts/managed/build-local-image.sh), backups on a local volume. Never a customer environment: a
+# cloud overlay points at managed PostgreSQL, the customer's IdP, a real TSA, a KMS-backed secret store, object storage
+# and a TLS ingress instead (docs/MANAGED-OFFER.md §4).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - postgres.yaml
+  - test-services.yaml
+commonAnnotations:
+  qadamar.example/environment: local test only
+images:
+  - {name: registry.example.invalid/gate, newName: gate, newTag: local}
+  - {name: registry.example.invalid/gate-ops, newName: gate-ops, newTag: local}
+configMapGenerator:
+  - name: gate-config
+    behavior: merge
+    literals:
+      # the port-forward address smoke.sh uses; the test IdP redirects back to it
+      - PUBLIC_ORIGIN=https://localhost:18787
+      # no proxy in front: kubectl port-forward connects directly, so X-Forwarded-For is ignored
+      - TRUSTED_PROXIES=
+      # TEST ONLY: the in-cluster PostgreSQL certificate is signed by a throwaway CA and names "postgres"
+      - DATABASE_TLS_CA_FILE=/etc/gate/postgres/ca.crt
+      # TEST ONLY: Qadamar terminates TLS itself with the tenant's test certificate (Secret gate-tls)
+      - TLS_CERT_FILE=/etc/gate/tls/tls.crt
+      - TLS_KEY_FILE=/etc/gate/tls/tls.key
+      # TEST ONLY: trust the tenant's throwaway test CA for the test IdP, TSA and webhook (same file as TSA_CA_FILE)
+      - NODE_EXTRA_CA_CERTS=/etc/gate/tsa/ca.pem
+      # TEST ONLY: seed the first start from the image's toy world (smoke.sh decides on bob and CASE-14); production
+      # refuses a world marked "demo" otherwise
+      - ALLOW_DEMO_WORLD=true
+  - {name: test-idp, files: [test-idp/idp.mjs]}
+  - {name: test-tsa, files: [test-tsa/tsa.mjs]}
+  - {name: test-webhook, files: [test-webhook/receiver.mjs]}
+patches:
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata: {name: gate}
+  - target: {kind: Deployment, name: gate}
+    patch: |-
+      # local images exist only in this machine's Docker: never pull
+      - {op: replace, path: /spec/template/spec/containers/0/imagePullPolicy, value: Never}
+      - {op: add, path: /spec/template/spec/containers/0/readinessProbe/httpGet/scheme, value: HTTPS}
+      - {op: add, path: /spec/template/spec/containers/0/volumeMounts/-, value: {name: tls, mountPath: /etc/gate/tls, readOnly: true}}
+      - {op: add, path: /spec/template/spec/volumes/-, value: {name: tls, secret: {secretName: gate-tls, defaultMode: 0440}}}
+  - target: {kind: Job, name: gate-migrate}
+    patch: |-
+      - {op: replace, path: /spec/template/spec/containers/0/imagePullPolicy, value: Never}
+  - target: {kind: CronJob, name: gate-backup}
+    patch: |-
+      - {op: replace, path: /spec/jobTemplate/spec/template/spec/containers/0/imagePullPolicy, value: Never}
+  # PostgreSQL is the in-cluster StatefulSet, not a managed endpoint
+  - target: {kind: NetworkPolicy, name: gate-egress-database}
+    patch: |-
+      - op: replace
+        path: /spec/egress/1/to
+        value: [{podSelector: {matchLabels: {app.kubernetes.io/name: postgres}}}]
+  # the IdP, TSA and webhook are the in-cluster test services
+  - target: {kind: NetworkPolicy, name: gate-egress-idp-tsa}
+    patch: |-
+      - op: replace
+        path: /spec/egress
+        value: [{to: [{podSelector: {matchLabels: {app.kubernetes.io/component: test-service}}}], ports: [{port: 8443, protocol: TCP}]}]

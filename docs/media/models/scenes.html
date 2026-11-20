@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qadamar — access control models (video source)</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #05080a; }
+  .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; }
+  svg { display: block; position: absolute; left: 0; top: 0; font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
+  .m { font-family: "SF Mono", Menlo, Monaco, monospace; }
+</style>
+<link rel="stylesheet" href="../../../design/gate-brand.css">
+<link rel="stylesheet" href="../brand.css">
+</head>
+<body>
+<div id="root"></div>
+<script src="../kit.js"></script>
+<script>
+// Source of docs/media/models/gate-models.mp4, rendered by docs/media/build.mjs with the shared ../kit.js.
+// Codes, stage order and integrity levels are the engine's own (packages/core/src: evaluate.ts, mandatory.ts, types.ts).
+const SCENES = {
+  intro:       { label: 'ACCESS CONTROL MODELS', title: 'Seven models. One decision.' },
+  rbac:        { label: '01 · RBAC', title: 'Rights follow the job.', tag: 'ROLE-BASED' },
+  abac:        { label: '02 · ABAC', title: 'Rules read the person, the record and its content.', tag: 'ATTRIBUTE-BASED' },
+  cbac:        { label: '03 · CBAC', title: 'Same person, different situation.', tag: 'CONTEXT-BASED' },
+  rebac:       { label: '04 · REBAC', title: 'A reason to know, with its path.', tag: 'RELATIONSHIP-BASED' },
+  blp:         { label: '05 · BELL–LAPADULA · 1973', title: 'Confidentiality: no read up, no write down.', tag: 'MANDATORY' },
+  biba:        { label: '06 · BIBA · 1977', title: 'Integrity: no write up.', tag: 'MANDATORY' },
+  clarkwilson: { label: '07 · CLARK–WILSON · 1987', title: 'Sensitive changes only through certified commands.', tag: 'MANDATORY' },
+  combine:     { label: 'HOW THEY COMBINE', title: 'One fixed order. One deny stops it.' },
+  outro:       {},
+};
+const LOG = {
+  intro: [[0.5, 'PERMIT', 'read  case file', 'RBAC'], [0.72, 'DENY', 'read  L3 file', 'BLP.NO_READ_UP']],
+  rbac: [[0.28, 'PERMIT', 'read  case file · analyst', 'role: analyst'], [0.45, 'PERMIT', 'approve  · finance', 'role: finance'], [0.62, 'DENY', 'approve  · analyst', 'RBAC.NOT_ELIGIBLE']],
+  abac: [[0.6, 'PERMIT', 'read  contract · pm', 'ABAC.CONTENT_MASK']],
+  cbac: [[0.3, 'PERMIT', 'read  · untrusted net', 'NET.UNTRUSTED_LEVEL'], [0.48, 'DENY', 'export  · old MFA', 'CBAC.MFA_STALE'], [0.66, 'DENY', 'read  · outside window', 'CBAC.TIME_WINDOW'], [0.84, 'DENY', 'read  · no device signal', 'CBAC.SIGNAL_MISSING']],
+  rebac: [[0.24, 'PERMIT', 'read  record A', 'relation: treats'], [0.44, 'PERMIT', 'read  contract', 'relation: member'], [0.62, 'DENY', 'read  record B', 'NTK.NO_REASON']],
+  blp: [[0.3, 'PERMIT', 'read  L1 · session L2', 'read down'], [0.5, 'DENY', 'read  L3', 'BLP.NO_READ_UP'], [0.72, 'DENY', 'write  L1', 'BLP.NO_WRITE_DOWN']],
+  biba: [[0.42, 'DENY', 'write  verified data', 'BIBA.NO_WRITE_UP'], [0.7, 'DENY', 'approve  on derived data', 'BIBA.NO_READ_DOWN']],
+  clarkwilson: [[0.26, 'DENY', 'edit  ledger · direct', 'CW.UNCERTIFIED_TP'], [0.5, 'PERMIT', 'release  · certified', 'CW.DECISION_TOKEN'], [0.76, 'DENY', 'approve  own payment', 'SOD.create-vs-approve']],
+  combine: [[0.44, 'PERMIT', 'read  case file', 'all stages'], [0.84, 'DENY', 'read  case file', 'NTK.NO_REASON']],
+};
+const CAM = {
+  intro: [[0, 960, 500, 1.18], [0.35, 960, 510, 1], [1, 960, 520, 1]],
+  rbac: [[0, 560, 440, 1.12], [0.3, 960, 460, 1.02], [0.55, 1000, 520, 1.06], [0.75, 960, 600, 1.06], [1, 960, 540, 1]],
+  abac: [[0, 520, 340, 1.15], [0.2, 960, 380, 1.02], [0.45, 960, 560, 1.08], [0.7, 960, 640, 1.08], [1, 960, 540, 1]],
+  cbac: [[0, 960, 500, 1.15], [0.2, 700, 400, 1.08], [0.4, 700, 640, 1.08], [0.58, 1220, 400, 1.08], [0.76, 1220, 640, 1.08], [1, 960, 520, 1]],
+  rebac: [[0, 560, 330, 1.15], [0.3, 1000, 460, 1.04], [0.62, 1100, 340, 1.08], [0.8, 960, 500, 1], [1, 960, 520, 1]],
+  blp: [[0, 960, 480, 1.12], [0.3, 900, 500, 1.05], [0.6, 900, 560, 1.05], [1, 960, 520, 1]],
+  biba: [[0, 960, 480, 1.12], [0.3, 900, 460, 1.05], [0.6, 900, 600, 1.05], [1, 960, 520, 1]],
+  clarkwilson: [[0, 700, 440, 1.1], [0.3, 960, 440, 1.03], [0.55, 1100, 480, 1.05], [0.75, 900, 560, 1.03], [1, 960, 540, 1]],
+  combine: [[0, 960, 480, 1], [0.1, 560, 470, 1.2], [0.42, 1460, 470, 1.2], [0.5, 960, 480, 1.02], [0.6, 800, 450, 1.15], [0.86, 960, 420, 1.08], [1, 960, 480, 1]],
+  outro: [[0, 960, 470, 1.1], [1, 960, 540, 1]],
+};
+const ORDER = ['intro', 'rbac', 'abac', 'cbac', 'rebac', 'blp', 'biba', 'clarkwilson', 'combine'];
+const MODELS = [['RBAC', 0], ['ABAC', 0], ['CBAC', 0], ['REBAC', 0], ['BELL–LAPADULA', 1], ['BIBA', 1], ['CLARK–WILSON', 1]];
+
+function tile(x, y, label, mand, u) {
+  if (u <= 0) return '';
+  const col = mand ? C.ok : C.ice, w = Math.max(150, tw(label, 17, 1) + 44);
+  return `<g ${popAt(x, y, u)}><rect x="${x - w / 2}" y="${y - 30}" width="${w}" height="60" rx="12" fill="url(#glass)" stroke="${col}" stroke-opacity=".7" stroke-width="1.5" filter="url(#shadow)"/>` +
+    tx(x, y + 6, 17, scramble(label, cl(u * 1.4)), { m: 1, a: 'middle', fill: col, w: 700, ls: 1 }) + `</g>`;
+}
+function attr(x, y, key, val, u, hl, col = C.ice) {                     // one "key: value" attribute row
+  if (u <= 0) return '';
+  return `<g ${reveal(u, 8)}>` + (hl > 0 ? `<rect x="${x - 12}" y="${y - 24}" width="384" height="36" rx="6" fill="${col}" opacity="${0.14 * hl}" stroke="${col}" stroke-opacity="${0.7 * hl}"/>` : '') +
+    tx(x, y, 15, key, { m: 1, fill: C.faint }) + tx(x + 130, y, 17, val, { m: 1, fill: hl > 0.5 ? col : C.text }) + `</g>`;
+}
+function ladder(p, x, y, names, subjIdx, sub, cols) {                     // levels top (high) to bottom (low)
+  let s = '';
+  names.forEach((n, i) => {
+    const u = ko(p, 0.03 + i * 0.03, 0.12 + i * 0.03), yy = y + i * 120, me = i === subjIdx;
+    if (u <= 0) return;
+    s += `<g ${reveal(u, 14)}><rect x="${x}" y="${yy}" width="760" height="96" rx="10" fill="url(#glass)" stroke="${me ? C.ice : C.line2}" stroke-width="${me ? 2 : 1.2}" filter="url(#shadow)"/>` +
+      tx(x + 30, yy + 58, 30, n, { m: 1, w: 700, fill: cols ? cols[i] : C.text }) + (me ? pill(x + 560, yy + 56, sub, C.ice, ko(p, 0.12, 0.2), 15) : '') + `</g>`;
+  });
+  return s;
+}
+function arrow(x1, y1, x2, y2, col, u, label, lx, ly) {                  // curved arrow with a label
+  if (u <= 0) return '';
+  const mx = Math.max(x1, x2) + 120, len = 600, d = `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`;
+  return `<path d="${d}" fill="none" stroke="${col}" stroke-width="3" stroke-dasharray="${len}" stroke-dashoffset="${len * (1 - u)}" filter="url(#glow)"/>` +
+    (u > 0.95 ? `<path d="M${x2 + 14} ${y2 - 9} L${x2} ${y2} L${x2 + 14} ${y2 + 9}" fill="none" stroke="${col}" stroke-width="3"/>` : '') +
+    (label ? tx(lx, ly, 16, scramble(label, cl(u * 1.3)), { m: 1, fill: col, w: 700 }) : '');
+}
+
+const DRAW = {
+  intro(p, lt, t) {
+    let s = engineCore(960, 500, 0.9, t, ko(p, 0.05, 0.25));
+    MODELS.forEach(([label, mand], i) => {
+      const a = -Math.PI / 2 + i * (2 * Math.PI / 7) + t * 0.05, u = ko(p, 0.14 + i * 0.05, 0.3 + i * 0.05), r = L(1.5, 1, eo(u));
+      const x = 960 + Math.cos(a) * 560 * r, y = 500 + Math.sin(a) * 280 * r;
+      s += flow(x, y, 960, 500, k(p, 0.5 + i * 0.02, 0.62 + i * 0.02), C.line2) + stream(x, y, 960, 500, mand ? C.ok : C.ice, k(p, 0.62, 0.7));
+      s += tile(x, y, label, mand, u);
+    });
+    s += pill(866, 672, 'ONE DECISION', C.ok, ko(p, 0.72, 0.8), 20);
+    return s;
+  },
+  rbac(p) {
+    let s = '';
+    const subj = [['Analyst', 330], ['Finance officer', 600]], roles = [['analyst', 330], ['finance', 600]];
+    const perms = [['read · case file', 280, 0], ['export · report', 380, 0], ['approve · payment', 560, 1], ['release · payment', 650, 1]];
+    s += tx(260, 200, 15, 'SUBJECTS', { m: 1, fill: C.dim, ls: 3, op: k(p, 0.02, 0.1) }) + tx(860, 200, 15, 'ROLES', { m: 1, fill: C.dim, ls: 3, op: k(p, 0.05, 0.12) }) + tx(1380, 200, 15, 'PERMISSIONS', { m: 1, fill: C.dim, ls: 3, op: k(p, 0.08, 0.15) });
+    subj.forEach(([n, y], i) => { s += role(140, y, n, i ? 'subject' : 'subject', ko(p, 0.04 + i * 0.04, 0.14 + i * 0.04)); });
+    roles.forEach(([n, y], i) => {
+      s += flow(540, y, 850, y, k(p, 0.16 + i * 0.1, 0.24 + i * 0.1), C.ice) + pill(860, y + 6, n, i ? C.ok : C.ice, ko(p, 0.12 + i * 0.04, 0.2 + i * 0.04), 20);
+    });
+    perms.forEach(([n, y, r], i) => {
+      const u = ko(p, 0.12 + i * 0.03, 0.2 + i * 0.03), ry = roles[r][1];
+      s += flow(1010, ry, 1360, y, k(p, 0.22 + r * 0.12, 0.3 + r * 0.12), r ? C.ok : C.ice);
+      s += `<g ${reveal(u, 10)}><rect x="1370" y="${y - 28}" width="380" height="56" rx="10" fill="url(#glass)" stroke="${C.line2}" filter="url(#shadow)"/>` + tx(1394, y + 7, 18, n, { m: 1 }) + `</g>`;
+    });
+    s += flow(1010, 330, 1360, 560, k(p, 0.55, 0.6), C.no, true);
+    s += mover((v) => [L(1010, 1360, v), L(330, 560, v)], cl((p - 0.55) / 0.06), 'approve', C.no);
+    s += verdict(1300, 470, false, ko(p, 0.6, 0.65) * (1 - k(p, 0.74, 0.78)), 'RBAC.NOT_ELIGIBLE');
+    const rc = ko(p, 0.74, 0.82);
+    if (rc > 0) {
+      s += `<g ${reveal(rc, 16)}><rect x="720" y="700" width="480" height="140" rx="10" fill="url(#glass)" stroke="${C.amber}" stroke-opacity=".6" filter="url(#shadow)"/>` +
+        tx(744, 736, 14, 'CASE FILE', { m: 1, fill: C.dim, ls: 2 }) +
+        tx(744, 772, 15, 'classification', { m: 1, fill: C.faint }) + tx(940, 772, 17, '?', { m: 1, fill: C.amber, w: 700 }) +
+        tx(744, 800, 15, 'compartment', { m: 1, fill: C.faint }) + tx(940, 800, 17, '?', { m: 1, fill: C.amber, w: 700 }) +
+        tx(744, 828, 15, 'content', { m: 1, fill: C.faint }) + tx(940, 828, 17, '?', { m: 1, fill: C.amber, w: 700 }) + `</g>`;
+      s += tx(1230, 780, 16, scramble('a role alone knows nothing about the record', k(p, 0.8, 0.92)), { m: 1, fill: C.amber });
+    }
+    return s;
+  },
+  abac(p) {
+    let s = '';
+    const cols = [['SUBJECT', 150, [['roles', 'project_manager'], ['clearance', 'L2'], ['unit', 'delivery']]],
+      ['RESOURCE', 750, [['type', 'contract'], ['level', 'L1'], ['content', 'finance.amount']]],
+      ['ACTION', 1350, [['action', 'read'], ['channel', 'web'], ['purpose', 'delivery']]]];
+    const hl = k(p, 0.36, 0.44);
+    cols.forEach(([title, x, rows], c) => {
+      s += panel(x, 170, 420, 300, p, 0.02 + c * 0.05, title);
+      rows.forEach(([key, val], i) => {
+        const on = (c === 0 && i === 0) || (c === 1 && i === 2) || (c === 2 && i === 0);
+        s += attr(x + 30, 280 + i * 56, key, val, ko(p, 0.08 + c * 0.05 + i * 0.02, 0.16 + c * 0.05 + i * 0.02), on ? hl : 0, c === 1 ? C.amber : C.ice);
+      });
+    });
+    s += panel(330, 540, 1260, 150, p, 0.24, 'CONTENT RULE · finance-mask');
+    const rule = 'mask  finance.amount  unless  subject.roles contains finance_approver';
+    s += tx(370, 640, 22, type(rule, k(p, 0.28, 0.38)), { m: 1, fill: C.text });
+    [[360, 470], [960, 470], [1560, 470]].forEach(([x], i) => { s += flow(x, 470, x, 540, k(p, 0.42 + i * 0.02, 0.48 + i * 0.02), i === 1 ? C.amber : C.ice); });
+    s += flow(960, 690, 960, 760, k(p, 0.5, 0.56), C.amber);
+    s += pill(740, 800, 'PERMIT + mask finance.amount', C.amber, ko(p, 0.56, 0.62), 20);
+    const mk = ko(p, 0.64, 0.72);
+    if (mk > 0) s += `<g ${reveal(mk, 10)}>` + tx(1240, 798, 16, 'total value', { m: 1, fill: C.faint }) + tx(1380, 798, 18, scramble('[MASKED]', mk), { m: 1, fill: C.amber, w: 700 }) + `</g>`;
+    return s;
+  },
+  cbac(p) {
+    let s = role(810, 500, 'Analyst', 'clearance L2', ko(p, 0.02, 0.1));
+    const cards = [['NETWORK', 200, 220, 'trusted', 'untrusted', 'NET.UNTRUSTED_LEVEL', 0.22, 'level drops to L1', C.amber],
+      ['MFA', 200, 580, 'fresh', 'too old', 'CBAC.MFA_STALE', 0.4, 'export denied', C.no],
+      ['TIME WINDOW', 1380, 220, 'inside', 'outside', 'CBAC.TIME_WINDOW', 0.58, 'denied', C.no],
+      ['DEVICE SIGNAL', 1380, 580, 'present', 'missing', 'CBAC.SIGNAL_MISSING', 0.76, 'fails closed', C.no]];
+    cards.forEach(([name, x, y, good, bad, code, at, effect, col], i) => {
+      const u = ko(p, 0.06 + i * 0.03, 0.14 + i * 0.03), b = k(p, at, at + 0.05), cx = x < 900 ? x + 340 : x;
+      s += panel(x, y, 340, 220, p, 0.06 + i * 0.03, name, b > 0.5 ? col : undefined);
+      if (u <= 0) return;
+      s += `<g opacity="${u}"><rect x="${x + 26}" y="${y + 84}" width="76" height="38" rx="19" fill="${b > 0.5 ? col : C.ok}" fill-opacity=".18" stroke="${b > 0.5 ? col : C.ok}"/>` +
+        `<circle cx="${L(x + 45, x + 83, b)}" cy="${y + 103}" r="13" fill="${b > 0.5 ? col : C.ok}" filter="url(#glow)"/>` +
+        tx(x + 120, y + 110, 20, b > 0.5 ? bad : good, { m: 1, fill: b > 0.5 ? col : C.ok }) +
+        tx(x + 26, y + 170, 14, b > 0.5 ? scramble(code, cl(b * 1.5)) : '', { m: 1, fill: col, w: 700 }) +
+        tx(x + 26, y + 196, 14, b > 0.5 ? effect : '', { m: 1, fill: C.dim }) + `</g>`;
+      s += flow(cx, y + 110, x < 900 ? 800 : 1120, 500, u * 0.6, b > 0.5 ? col : C.line2, true);
+      s += ring(x + 170, y + 110, cl((p - at - 0.02) / 0.1), col, 40, 160);
+    });
+    const ac = 1 - k(p, 0.22, 0.27) * 0.25 - k(p, 0.4, 0.45) * 0.2 - k(p, 0.58, 0.63) * 0.2 - k(p, 0.76, 0.81) * 0.35, R = 150;
+    const a = Math.max(0.0001, ac) * 2 * Math.PI * 0.999, red = p > 0.78;
+    s += `<g opacity="${ko(p, 0.08, 0.16)}" transform="translate(960 500)"><circle r="${R}" fill="none" stroke="${C.line2}" stroke-width="6" stroke-dasharray="2 8"/>` +
+      `<path d="M0 ${-R} A${R} ${R} 0 ${a > Math.PI ? 1 : 0} 1 ${R * Math.sin(a)} ${-R * Math.cos(a)}" fill="none" stroke="${red ? C.no : C.ok}" stroke-width="6" stroke-linecap="round" filter="url(#glow)"/></g>`;
+    s += tx(960, 690, 18, red ? scramble('missing signal: fail closed', k(p, 0.8, 0.88)) : 'reachable access', { m: 1, a: 'middle', fill: red ? C.no : C.dim, op: ko(p, 0.1, 0.18) });
+    return s;
+  },
+  rebac(p) {
+    let s = '';
+    const node = (x, y, label, sub, col, a) => { const u = ko(p, a, a + 0.08); if (u <= 0) return ''; const w = Math.max(240, tw(label, 20) + 70);
+      return `<g ${popAt(x, y, u)}><rect x="${x - w / 2}" y="${y - 40}" width="${w}" height="80" rx="14" fill="url(#glass)" stroke="${col}" stroke-opacity=".7" stroke-width="1.5" filter="url(#shadow)"/>` +
+        tx(x, y - 4, 20, label, { a: 'middle', w: 600 }) + tx(x, y + 22, 14, sub, { m: 1, a: 'middle', fill: C.dim }) + `</g>`; };
+    const edge = (x1, y1, x2, y2, label, col, a) => flow(x1, y1, x2, y2, k(p, a, a + 0.08), col) + stream(x1, y1, x2, y2, col, k(p, a + 0.08, a + 0.12)) +
+      tx((x1 + x2) / 2, (y1 + y2) / 2 - 14, 15, scramble(label, k(p, a + 0.04, a + 0.12)), { m: 1, a: 'middle', fill: col });
+    s += edge(330, 300, 760, 300, 'treats', C.ok, 0.12) + edge(330, 620, 760, 620, 'member of', C.ok, 0.3) + edge(1040, 620, 1440, 620, 'contains', C.ok, 0.36);
+    s += node(200, 300, 'Clinician', 'subject', C.ice, 0.03) + node(900, 300, 'Patient record A', 'resource', C.ok, 0.08);
+    s += node(200, 620, 'Manager', 'subject', C.ice, 0.22) + node(900, 620, 'Project P', 'relation target', C.ok, 0.28) + node(1580, 620, 'Contract', 'resource', C.ok, 0.34);
+    s += node(1580, 300, 'Patient record B', 'no relation', C.no, 0.5);
+    s += mover((v) => [L(330, 1440, v), L(330, 300, v)], cl((p - 0.54) / 0.08), 'read · B', C.no);
+    s += verdict(1580, 420, false, ko(p, 0.62, 0.68), 'NTK.NO_REASON');
+    const pl = k(p, 0.7, 0.8);                                      // explain: the path that produced the answer
+    if (pl > 0) {
+      s += `<path d="M330 620 H${L(330, 1440, pl)}" stroke="${C.ok}" stroke-width="6" opacity=".5" filter="url(#glow)"/>`;
+      s += tx(960, 740, 18, scramble('path: manager → member of → project P → contains → contract', pl), { m: 1, a: 'middle', fill: C.ok });
+    }
+    s += pill(770, 806, 'NEVER LIFTS A CLEARANCE', C.amber, ko(p, 0.84, 0.9), 18);
+    return s;
+  },
+  blp(p) {
+    const lv = ['L3', 'L2', 'L1', 'L0'], X = 560, Y = 190;
+    let s = ladder(p, X, Y, lv, 1, 'session L2', [C.no, C.ice, C.text, C.text]);
+    const rowY = (i) => Y + i * 120 + 48;
+    s += arrow(X + 760, rowY(1), X + 760, rowY(2), C.ok, k(p, 0.22, 0.3), 'read down: permitted', X + 900, (rowY(1) + rowY(2)) / 2 + 6);
+    s += flow(X - 40, rowY(1), X - 40, rowY(0), k(p, 0.42, 0.48), C.no) + verdict(X - 120, rowY(0), false, ko(p, 0.46, 0.52), 'BLP.NO_READ_UP');
+    s += flow(X - 40, rowY(1), X - 40, rowY(2), k(p, 0.64, 0.7), C.no, true) + verdict(X - 120, rowY(2) + 30, false, ko(p, 0.68, 0.74), 'BLP.NO_WRITE_DOWN');
+    const fl = cl((p - 0.8) / 0.18);                                  // a secret trying to flow down hits the barrier
+    if (fl > 0) for (let i = 0; i < 6; i++) { const v = (fl * 1.6 + i / 6) % 1, y = L(rowY(0), rowY(1) - 50, Math.min(v, 1)); s += `<circle cx="${X + 260 + i * 40}" cy="${y}" r="5" fill="${C.no}" opacity="${1 - v * 0.6}" filter="url(#glow)"/>`; }
+    if (fl > 0) s += `<rect x="${X + 200}" y="${rowY(1) - 54}" width="380" height="4" fill="${C.no}" filter="url(#glow)" opacity="${fl}"/>` + tx(X + 800, rowY(0) + 6, 16, 'secrets never flow down', { m: 1, fill: C.no, op: fl });
+    return s;
+  },
+  biba(p) {
+    const lv = ['verified', 'system', 'extracted', 'derived'], X = 560, Y = 190;
+    let s = ladder(p, X, Y, lv, 2, 'writer: extracted', [C.ok, C.text, C.ice, C.faint]);
+    const rowY = (i) => Y + i * 120 + 48;
+    s += flow(X - 40, rowY(2), X - 40, rowY(0), k(p, 0.34, 0.42), C.no, true) + verdict(X - 120, rowY(0), false, ko(p, 0.4, 0.46), 'BIBA.NO_WRITE_UP');
+    s += tx(X + 900, rowY(0) + 6, 16, scramble('less trusted cannot change more trusted', k(p, 0.44, 0.54)), { m: 1, fill: C.no });
+    s += arrow(X + 760, rowY(3), X + 760, rowY(1), C.no, k(p, 0.62, 0.7), 'approve cannot rely on derived data', X + 900, rowY(2) + 50);
+    s += verdict(X + 1080, rowY(3), false, ko(p, 0.7, 0.76), 'BIBA.NO_READ_DOWN');
+    s += tx(960, 690, 17, 'Bell–LaPadula guards secrets going down. Biba guards trust going up.', { a: 'middle', fill: C.dim, op: k(p, 0.82, 0.92) });
+    return s;
+  },
+  clarkwilson(p) {
+    let s = panel(1100, 180, 560, 330, p, 0.02, 'CONSTRAINED ITEM · PAYMENT LEDGER', C.ok);
+    [['entries', 'certified only'], ['version', 'bound to token'], ['check', 'integrity procedure']].forEach(([k1, v], i) => { s += attr(1130, 290 + i * 56, k1, v, ko(p, 0.06 + i * 0.02, 0.14 + i * 0.02), 0); });
+    s += role(160, 300, 'Officer A', 'maker', ko(p, 0.04, 0.12));
+    s += flow(560, 300, 1090, 300, k(p, 0.16, 0.22), C.no, true) + mover((v) => [L(560, 1090, v), 300], cl((p - 0.16) / 0.06), 'edit · direct', C.no);
+    s += verdict(1000, 200, false, ko(p, 0.22, 0.28) * (1 - k(p, 0.36, 0.4)), 'CW.UNCERTIFIED_TP');
+    s += panel(560, 560, 440, 200, p, 0.32, 'CERTIFIED COMMAND · release', C.ice);
+    const tk = k(p, 0.42, 0.5), burn = k(p, 0.5, 0.56);
+    if (tk > 0 && burn < 1) s += `<g opacity="${1 - burn}" transform="translate(${L(780, 1380, tk)} ${L(690, 510, tk)}) scale(${1 - burn * 0.6})"><rect x="-86" y="-21" width="172" height="42" rx="21" fill="${C.ice}" fill-opacity=".14" stroke="${C.ice}" filter="url(#glow)"/>` + tx(0, 6, 15, 'token · single use', { m: 1, a: 'middle', fill: C.ice }) + `</g>`;
+    if (burn > 0 && burn < 1) for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8 + hash(i), d = burn * (50 + 60 * hash(i + 9)); s += `<circle cx="${1380 + Math.cos(a) * d}" cy="${510 + Math.sin(a) * d}" r="${3.5 * (1 - burn)}" fill="${C.ice}" filter="url(#glow)"/>`; }
+    s += tx(600, 680, 16, scramble('re-evaluated · reserved · consumed', k(p, 0.38, 0.48)), { m: 1, fill: C.ice });
+    s += verdict(1380, 600, true, ko(p, 0.54, 0.6));
+    s += role(160, 760, 'Officer A', 'created this payment', ko(p, 0.64, 0.7), C.amber);
+    s += flow(560, 760, 1090, 760, k(p, 0.7, 0.74), C.no, true) + mover((v) => [L(560, 1090, v), 760], cl((p - 0.7) / 0.05), 'approve', C.no);
+    s += verdict(1200, 760, false, ko(p, 0.75, 0.8), 'SOD.create-vs-approve');
+    return s;
+  },
+  combine(p) {
+    const stages = ['ROLES', 'MANDATORY', 'DELEGATION', 'NEED-TO-KNOW', 'ATTRIBUTES', 'CONTEXT', 'CLARK–WILSON', 'SEPARATION'];
+    const sub = ['RBAC', 'BLP · Biba · network', '', 'relations', 'ABAC', 'CBAC', 'certified commands', 'of duty'];
+    const x0 = 250, dx = 205, y = 470, start = x0 - 70, end = x0 + dx * 7 + 70, stopAt = 3, stopX = x0 + dx * stopAt - 36;
+    let s = `<path d="M${start} ${y} H${end}" stroke="${C.line2}" stroke-width="2"/>` + stream(start, y, end, y, C.ice, k(p, 0.04, 0.1) * 0.5);
+    const a = cl((p - 0.08) / 0.34), b = cl((p - 0.5) / 0.3);
+    const ax = L(start, end, a), bx = Math.min(L(start, end, b), stopX), failed = b > 0 && bx >= stopX - 0.5;
+    const tFail = 0.5 + 0.3 * (stopX - start) / (end - start);
+    stages.forEach((name, i) => {
+      const x = x0 + i * dx, u = ko(p, 0.01 + i * 0.012, 0.08 + i * 0.012), mand = i === 1 || i === 6;
+      const lit = (a > 0 && p < 0.5 && ax >= x) || (b > 0 && i < stopAt && bx >= x);
+      const col = failed && i === stopAt ? C.no : lit ? C.ok : C.line2;
+      s += `<g ${popAt(x, y, u)}>${hexNode(x, y, 32, col, col !== C.line2)}` +
+        tx(x, y + 7, 18, pad(i + 1), { m: 1, a: 'middle', fill: col === C.line2 ? C.dim : col, w: 700 }) +
+        tx(x, y + 70, 15, scramble(name, cl(u * 1.2)), { m: 1, a: 'middle', fill: mand ? C.ok : C.dim, ls: 1 }) +
+        tx(x, y + 94, 13, sub[i], { m: 1, a: 'middle', fill: C.faint }) + `</g>`;
+    });
+    s += mover((v) => [L(start, end, v), y], a, 'read · file', C.ok);
+    if (b > 0) s += mover((v) => [Math.min(L(start, end, v), stopX), y], Math.min(b, 0.999), 'read · file', C.no);
+    s += ring(x0 + dx * stopAt, y, cl((p - tFail) / 0.1), C.no, 32, 160);
+    s += verdict(end + 60, y, true, ko(p, 0.4, 0.46) * (1 - k(p, 0.5, 0.54)));
+    s += verdict(x0 + dx * stopAt, y - 210, false, ko(p, 0.8, 0.86), 'NTK.NO_REASON');
+    s += tx(960, 700, 20, 'Fixed order. No tenant rule can reorder a stage or switch it off.', { a: 'middle', fill: C.dim, op: k(p, 0.12, 0.25) });
+    return s;
+  },
+  outro(p, lt, t) {
+    let s = engineCore(960, 380, 0.85, t, ko(p, 0, 0.15));
+    const word = 'Qadamar';
+    s += `<text x="960" y="630" font-size="92" font-weight="600" text-anchor="middle" letter-spacing="1" fill="${C.text}">` +
+      [...word].map((ch, i) => `<tspan opacity="${eo(cl((p - 0.08 - i * 0.012) / 0.12))}">${esc(ch)}</tspan>`).join('') + `</text>`;
+    s += `<g ${reveal(ko(p, 0.2, 0.38))}>` + tx(960, 700, 30, 'Seven access models. One self-hosted engine.', { a: 'middle', fill: C.dim, w: 300 }) + `</g>`;
+    MODELS.forEach(([label, mand], i) => { s += tx(960 + (i - 3) * 205, 800, 15, label, { m: 1, a: 'middle', fill: mand ? C.ok : C.ice, op: k(p, 0.3 + i * 0.03, 0.42 + i * 0.03) }); });
+    s += tx(960, 990, 17, 'Not certified or accredited by NATO or any government. Version 0.12.2 (pre-1.0).', { a: 'middle', fill: C.faint, op: k(p, 0.4, 0.55), m: 1 });
+    s += tx(960, 1018, 15, 'Dates: first publication of each model (Bell–LaPadula 1973, Biba 1977, Clark–Wilson 1987).', { a: 'middle', fill: C.faint, op: k(p, 0.45, 0.6), m: 1 });
+    return s;
+  },
+};
+
+if (!window.__BUILD__) {
+  setTimes(Object.keys(SCENES).map((id, i) => ({ id, start: i * 12, dur: 12 })));
+  frame(Number(new URLSearchParams(location.search).get('t') || 0));
+}
+</script>
+</body>
+</html>

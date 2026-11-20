@@ -1,0 +1,71 @@
+/* Overview screen styles (scoped to .overview-screen). Tokens only. */
+
+.overview-screen {
+  min-width: 0;
+}
+
+/* Published policy: label/value rows aligned on one grid */
+.ov-kv-row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--space-05) var(--space-2);
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.ov-kv-row:last-child {
+  border-bottom: none;
+}
+
+.ov-kv-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  overflow-wrap: break-word;
+}
+
+.ov-kv-value {
+  min-width: 0;
+  justify-self: end;
+  text-align: end;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.ov-fingerprint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ov-fingerprint .mono {
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Touch: keep hit targets at 40px within this screen */
+@media (pointer: coarse) {
+  .overview-screen .btn {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ov-kv-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ov-kv-value {
+    justify-self: start;
+    text-align: start;
+  }
+
+  .ov-fingerprint {
+    justify-content: flex-start;
+  }
+}

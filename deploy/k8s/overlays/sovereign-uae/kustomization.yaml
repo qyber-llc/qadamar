@@ -1,0 +1,199 @@
+# Production overlay for a UAE sovereign cloud, provider NOT chosen (docs/MANAGED-OFFER.md §12). Provider-agnostic: every
+# value marked PARAMETER is a placeholder the owner or the chosen provider fills in; nothing here names a provider or
+# claims what one offers. `OVERLAY=sovereign-uae scripts/managed/new-tenant.sh <tenant>` without KUBE_CONTEXT renders it
+# (no cluster needed); with KUBE_CONTEXT it refuses to apply while placeholders remain (example.invalid, zero digests).
+#
+# What it adds to base: cluster mode (every Qadamar pod decides, zero-gap rolling updates) and stateless decision replicas
+# with an HPA; TLS everywhere (PEPs -> ingress -> Qadamar pods, replicas -> Qadamar pods, every pod -> PostgreSQL verify-full);
+# required node affinity to in-country zones and a hard zone spread; data-residency labels on every object and pod; a
+# strict egress allow-list (cluster DNS, PostgreSQL, IdP, TSA, break-glass receiver, SIEM; nothing else); images by
+# digest only. Secrets are referenced, never defined: the external secret store fills them (external-secrets.example.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gate-tenant # scripts/managed/new-tenant.sh sets gate-<tenant>
+resources:
+  - ../../base
+  - pdb-hpa.yaml
+# replicas BEFORE cluster (components/replicas/kustomization.yaml)
+components:
+  - ../../components/replicas
+  - ../../components/cluster
+labels:
+  # every object, and every pod (includeTemplates), says where its data must stay; selectors are left unchanged
+  - pairs:
+      qadamar.example/data-residency: AE
+      qadamar.example/environment: sovereign-uae
+    includeTemplates: true
+images:
+  # PARAMETER: the in-country registry and the release digest (never a tag: a tag can be re-pointed)
+  - name: registry.example.invalid/gate
+    newName: registry.uae.example.invalid/gate
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  - name: registry.example.invalid/gate-ops
+    newName: registry.uae.example.invalid/gate-ops
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  # the replica component's pods name the image as the base does before its own renaming
+  - name: gate
+    newName: registry.uae.example.invalid/gate
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+configMapGenerator:
+  - name: gate-config
+    behavior: merge
+    literals:
+      - PUBLIC_ORIGIN=https://tenant.gate.uae.example.invalid # PARAMETER: the tenant's public origin (the Ingress host)
+      - TRUSTED_PROXIES=192.0.2.64/26 # PARAMETER: the ingress controller's address range
+      # Qadamar pods serve TLS themselves (Secret gate-pod-tls, naming gate, gate.<ns>.svc and *.gate-nodes.<ns>.svc, and
+      # gate-replica, gate-replica.<ns>.svc for the replicas, which serve it too): the replicas require https to the Qadamar
+      # pods, PEPs reach the replicas over https, and traffic inside the cluster stays encrypted
+      - TLS_CERT_FILE=/etc/gate/tls/tls.crt
+      - TLS_KEY_FILE=/etc/gate/tls/tls.key
+patches:
+  # ---- Qadamar pods (cluster mode StatefulSet): TLS, PostgreSQL verify-full, SIEM, in-country placement ----
+  - target: {kind: StatefulSet, name: gate}
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata: {name: gate}
+      spec:
+        template:
+          metadata:
+            annotations: {prometheus.io/scheme: https}
+          spec:
+            affinity:
+              nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                    - matchExpressions:
+                        # PARAMETER: the in-country region and zones (well-known label keys, placeholder values)
+                        - {key: topology.kubernetes.io/region, operator: In, values: [in-country-region]}
+                        - {key: topology.kubernetes.io/zone, operator: In, values: [in-country-zone-1, in-country-zone-2, in-country-zone-3]}
+            # at most one node per zone more than any other: a zone loss leaves a node deciding (base: ScheduleAnyway)
+            topologySpreadConstraints:
+              - {topologyKey: topology.kubernetes.io/zone, maxSkew: 1, whenUnsatisfiable: DoNotSchedule,
+                 labelSelector: {matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}}}
+            containers:
+              - name: gate
+                readinessProbe: {httpGet: {scheme: HTTPS}}
+                env:
+                  - {name: GATE_NODE_SCHEME, value: https}
+                  - {name: SIEM_WEBHOOK_URL, valueFrom: {secretKeyRef: {name: gate-siem, key: SIEM_WEBHOOK_URL, optional: true}}}
+                  - {name: SIEM_HMAC_SECRET, valueFrom: {secretKeyRef: {name: gate-siem, key: SIEM_HMAC_SECRET, optional: true}}}
+                volumeMounts:
+                  - {name: tls, mountPath: /etc/gate/tls, readOnly: true}
+            volumes:
+              - {name: tls, secret: {secretName: gate-pod-tls, defaultMode: 0440}}
+              # DATABASE_TLS=verify-full (base) against the pinned private CA: the base's optional database TLS Secret
+              # (DATABASE_TLS_CA_FILE=/etc/gate/postgres/ca.crt and ca.crt) is required here
+              - {name: postgres-tls, secret: {secretName: gate-postgres-tls, optional: false, defaultMode: 0440}}
+  # ---- decision replicas: same placement, TLS from the same Secret, volumes on an in-country encrypted StorageClass ----
+  - target: {kind: StatefulSet, name: gate-replica}
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata: {name: gate-replica}
+      spec:
+        template:
+          metadata:
+            annotations: {prometheus.io/scheme: https}
+          spec:
+            affinity:
+              nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                    - matchExpressions:
+                        - {key: topology.kubernetes.io/region, operator: In, values: [in-country-region]}
+                        - {key: topology.kubernetes.io/zone, operator: In, values: [in-country-zone-1, in-country-zone-2, in-country-zone-3]}
+            topologySpreadConstraints:
+              - {topologyKey: topology.kubernetes.io/zone, maxSkew: 1, whenUnsatisfiable: DoNotSchedule,
+                 labelSelector: {matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: replica}}}
+            containers:
+              - name: gate
+                readinessProbe: {httpGet: {scheme: HTTPS}}
+                livenessProbe: {httpGet: {scheme: HTTPS}}
+                startupProbe: {httpGet: {scheme: HTTPS}}
+                env:
+                  - {name: PUBLIC_ORIGIN, value: "https://pdp.gate.uae.example.invalid"} # PARAMETER: the replicas' PEP origin
+                  # the replicas do not read gate-config: they serve TLS themselves, like the Qadamar pods
+                  - {name: TLS_CERT_FILE, value: /etc/gate/tls/tls.crt}
+                  - {name: TLS_KEY_FILE, value: /etc/gate/tls/tls.key}
+                volumeMounts:
+                  - {name: tls, mountPath: /etc/gate/tls, readOnly: true}
+            volumes:
+              - {name: tls, secret: {secretName: gate-pod-tls, defaultMode: 0440}}
+  # PARAMETER: a StorageClass provisioning only in the in-country zones (allowedTopologies), encrypted with a key of the
+  # in-country KMS; its name and parameters are provider specific
+  - target: {kind: StatefulSet, name: gate-replica}
+    patch: |-
+      - {op: add, path: /spec/volumeClaimTemplates/0/spec/storageClassName, value: gate-in-country-encrypted}
+  # ---- schema migration and backups: in-country nodes, PostgreSQL verify-full ----
+  - target: {kind: Job, name: gate-migrate}
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata: {name: gate-migrate}
+      spec:
+        template:
+          spec:
+            affinity:
+              nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                    - matchExpressions:
+                        - {key: topology.kubernetes.io/region, operator: In, values: [in-country-region]}
+                        - {key: topology.kubernetes.io/zone, operator: In, values: [in-country-zone-1, in-country-zone-2, in-country-zone-3]}
+            volumes: [{name: postgres-tls, secret: {secretName: gate-postgres-tls, optional: false, defaultMode: 0440}}]
+  - target: {kind: CronJob, name: gate-backup}
+    patch: |-
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata: {name: gate-backup}
+      spec:
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                affinity:
+                  nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                      nodeSelectorTerms:
+                        - matchExpressions:
+                            - {key: topology.kubernetes.io/region, operator: In, values: [in-country-region]}
+                            - {key: topology.kubernetes.io/zone, operator: In, values: [in-country-zone-1, in-country-zone-2, in-country-zone-3]}
+                # backup.sh maps DATABASE_TLS and DATABASE_TLS_CA_FILE to PGSSLMODE/PGSSLROOTCERT (scripts/ops/database-tls.ts)
+                volumes: [{name: postgres-tls, secret: {secretName: gate-postgres-tls, optional: false, defaultMode: 0440}}]
+  # PARAMETER: an in-country bucket mounted through the provider's CSI driver, or an encrypted in-country volume
+  - target: {kind: PersistentVolumeClaim, name: gate-backups}
+    patch: |-
+      - {op: add, path: /spec/storageClassName, value: gate-in-country-backup}
+  # ---- ingress: TLS to the client, re-encrypted to the pod ----
+  - target: {kind: Ingress, name: gate}
+    patch: |-
+      - {op: replace, path: /spec/tls/0/hosts/0, value: tenant.gate.uae.example.invalid}
+      - {op: replace, path: /spec/rules/0/host, value: tenant.gate.uae.example.invalid}
+      # PARAMETER: ingress-nginx's annotation; another controller has its own setting for an https backend
+      - {op: add, path: /metadata/annotations, value: {nginx.ingress.kubernetes.io/backend-protocol: HTTPS}}
+  # ---- strict egress: these destinations only, all PARAMETERS (private, in-country endpoints) ----
+  - target: {kind: NetworkPolicy, name: gate-egress-database}
+    patch: |-
+      - op: replace
+        path: /spec/egress/1
+        value: {to: [{ipBlock: {cidr: 192.0.2.0/28}}], ports: [{port: 5432, protocol: TCP}]} # PARAMETER: managed PostgreSQL private endpoint
+  - target: {kind: NetworkPolicy, name: gate-egress-idp-tsa}
+    patch: |-
+      - op: replace
+        path: /spec/egress
+        value:
+          - to:
+              - ipBlock: {cidr: 198.51.100.0/28} # PARAMETER: the customer's OIDC or SAML IdP
+              - ipBlock: {cidr: 203.0.113.0/28} # PARAMETER: the RFC 3161 time-stamp authority (TSA_URL)
+              - ipBlock: {cidr: 198.51.100.16/28} # PARAMETER: the break-glass notice receiver (BREAK_GLASS_WEBHOOK)
+              - ipBlock: {cidr: 203.0.113.16/28} # PARAMETER: the customer's SIEM receiver (SIEM_WEBHOOK_URL)
+            ports: [{port: 443, protocol: TCP}]
+  # the replicas' DNS rule allowed port 53 to any address: the cluster DNS only
+  - target: {kind: NetworkPolicy, name: gate-replica}
+    patch: |-
+      - op: replace
+        path: /spec/egress/1
+        value:
+          to: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}, podSelector: {matchLabels: {k8s-app: kube-dns}}}]
+          ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]

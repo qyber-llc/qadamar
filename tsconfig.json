@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["examples/integration-safety/**/*.ts", "packages/*/src/**/*.ts", "packages/*/test/**/*.ts", "scripts/docs/**/*.ts", "scripts/release/**/*.ts", "scripts/ops/**/*.ts", "scripts/export/**/*.ts", "scripts/audit/**/*.ts", "tools/ci/*.ts"]
+}

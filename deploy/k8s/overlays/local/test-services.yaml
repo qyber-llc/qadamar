@@ -1,0 +1,178 @@
+# LOCAL TEST ONLY: stand-ins for what a customer's environment provides, so the local overlay can run
+# GATE_PROFILE=production for real. Never part of a customer deployment:
+# - test-idp: an OpenID Connect provider that signs in any listed test user WITHOUT A PASSWORD and asserts MFA;
+# - test-tsa: an RFC 3161 time-stamp authority with a throwaway signer (openssl, gate-ops image);
+# - test-webhook: the receiver of signed break-glass notices.
+# All three serve https with a certificate from the tenant's throwaway test CA (scripts/managed/local-test-pki.sh,
+# Secrets test-services-tls and test-tsa-signer); Qadamar trusts that CA through NODE_EXTRA_CA_CERTS (local overlay only).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-idp
+  labels: &idp {app.kubernetes.io/name: test-idp, app.kubernetes.io/component: test-service}
+spec:
+  replicas: 1
+  selector: {matchLabels: *idp}
+  template:
+    metadata: {labels: *idp}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: idp
+          image: node:22-bookworm-slim
+          imagePullPolicy: Never
+          command: ["node", "/opt/test/idp.mjs"]
+          env:
+            - {name: TEST_IDP_ISSUER, value: "https://test-idp"}
+            # PUBLIC_ORIGIN of the local overlay plus the callback path
+            - {name: TEST_IDP_REDIRECT_URI, value: "https://localhost:18787/admin/v1/oidc/callback"}
+            - {name: OIDC_CLIENT_ID, valueFrom: {secretKeyRef: {name: gate-oidc, key: OIDC_CLIENT_ID}}}
+            - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: gate-oidc, key: OIDC_CLIENT_SECRET}}}
+          ports: [{name: https, containerPort: 8443}]
+          readinessProbe: {tcpSocket: {port: https}, periodSeconds: 2}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 10m, memory: 48Mi}
+            limits: {cpu: 500m, memory: 128Mi}
+          volumeMounts:
+            - {name: scripts, mountPath: /opt/test, readOnly: true}
+            - {name: tls, mountPath: /etc/test-services, readOnly: true}
+      volumes:
+        - {name: scripts, configMap: {name: test-idp}}
+        - {name: tls, secret: {secretName: test-services-tls, defaultMode: 0440}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-tsa
+  labels: &tsa {app.kubernetes.io/name: test-tsa, app.kubernetes.io/component: test-service}
+spec:
+  replicas: 1
+  selector: {matchLabels: *tsa}
+  template:
+    metadata: {labels: *tsa}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: tsa
+          image: gate-ops:local # openssl ts: the node image has no openssl command
+          imagePullPolicy: Never
+          command: ["node", "/opt/test/tsa.mjs"]
+          ports: [{name: https, containerPort: 8443}]
+          readinessProbe: {tcpSocket: {port: https}, periodSeconds: 2}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 10m, memory: 48Mi}
+            limits: {cpu: 500m, memory: 128Mi}
+          volumeMounts:
+            - {name: scripts, mountPath: /opt/test, readOnly: true}
+            - {name: tls, mountPath: /etc/test-services, readOnly: true}
+            - {name: signer, mountPath: /etc/test-tsa, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: scripts, configMap: {name: test-tsa}}
+        - {name: tls, secret: {secretName: test-services-tls, defaultMode: 0440}}
+        - {name: signer, secret: {secretName: test-tsa-signer, defaultMode: 0440}}
+        - {name: tmp, emptyDir: {medium: Memory, sizeLimit: 8Mi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-webhook
+  labels: &webhook {app.kubernetes.io/name: test-webhook, app.kubernetes.io/component: test-service}
+spec:
+  replicas: 1
+  selector: {matchLabels: *webhook}
+  template:
+    metadata: {labels: *webhook}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: receiver
+          image: node:22-bookworm-slim
+          imagePullPolicy: Never
+          command: ["node", "/opt/test/receiver.mjs"]
+          env:
+            - {name: BREAK_GLASS_WEBHOOK_SECRET, valueFrom: {secretKeyRef: {name: gate-break-glass, key: BREAK_GLASS_WEBHOOK_SECRET}}}
+          ports: [{name: https, containerPort: 8443}]
+          readinessProbe: {tcpSocket: {port: https}, periodSeconds: 2}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 10m, memory: 48Mi}
+            limits: {cpu: 500m, memory: 128Mi}
+          volumeMounts:
+            - {name: scripts, mountPath: /opt/test, readOnly: true}
+            - {name: tls, mountPath: /etc/test-services, readOnly: true}
+      volumes:
+        - {name: scripts, configMap: {name: test-webhook}}
+        - {name: tls, secret: {secretName: test-services-tls, defaultMode: 0440}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: test-idp}
+spec:
+  selector: {app.kubernetes.io/name: test-idp}
+  ports: [{name: https, port: 443, targetPort: https}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: test-tsa}
+spec:
+  selector: {app.kubernetes.io/name: test-tsa}
+  ports: [{name: https, port: 443, targetPort: https}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: test-webhook}
+spec:
+  selector: {app.kubernetes.io/name: test-webhook}
+  ports: [{name: https, port: 443, targetPort: https}]
+---
+# only the Qadamar server reaches the test services (kubectl port-forward, used by smoke.sh for the IdP, is not filtered)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-services-ingress
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/component: test-service}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}
+      ports:
+        - {port: 8443, protocol: TCP}

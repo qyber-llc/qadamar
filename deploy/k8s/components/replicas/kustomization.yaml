@@ -1,0 +1,21 @@
+# Stateless decision replicas (docs/API.md §3.9.5, docs/DEPLOY.md §7): pods that decide without a database, fed by the
+# signed state feed of the Qadamar pods and shipping their own durable audit chains back to them. Add it to an overlay
+# BEFORE the cluster component, if any: `components: [../../components/replicas, ../../components/cluster]` (its
+# patch adds GATE_REPLICA_KEYS to the base Deployment, whose template the cluster component then copies).
+# Secret gate-replica (not defined here, Qadamar pods only): GATE_REPLICA_KEYS, `gate-replica-*=<32-byte master>`; optional
+# ca.pem (the Qadamar pods' TLS CA, also mounted by the replicas). Secret gate-replica-keys (replica pods): one entry per pod
+# name, its own key derived from the master: `node scripts/ops/replica-key.ts gate-replica-0 gate-replica-1 < master >
+# keys.env`, then `kubectl create secret generic gate-replica-keys --from-env-file=keys.env`. Add an entry before scaling.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources: [replicas.yaml]
+patches:
+  - target: {kind: Deployment, name: gate}
+    patch: |-
+      - {op: add, path: /spec/template/spec/containers/0/env/-, value: {name: GATE_REPLICA_KEYS, valueFrom: {secretKeyRef: {name: gate-replica, key: GATE_REPLICA_KEYS}}}}
+  # the replicas reach the Qadamar pods' port 8787 (state feed, audit shipping, forwarded requests)
+  - target: {kind: NetworkPolicy, name: gate-ingress}
+    patch: |-
+      - op: add
+        path: /spec/ingress/-
+        value: {from: [{podSelector: {matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: replica}}}], ports: [{port: 8787, protocol: TCP}]}

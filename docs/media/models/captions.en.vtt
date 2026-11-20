@@ -1,0 +1,73 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.590
+Who may see what? Seven models answer it, each from a
+
+00:00:03.590 --> 00:00:07.180
+different angle. Qadamar combines them in one decision.
+
+00:00:08.280 --> 00:00:14.490
+Role-based access: rights follow the job. An analyst role, a finance
+
+00:00:14.490 --> 00:00:20.700
+role. Simple, but a role alone knows nothing about the record.
+
+00:00:21.800 --> 00:00:25.990
+Attribute-based access: rules read the person, the record and its content.
+
+00:00:25.990 --> 00:00:30.180
+A financial amount is masked for anyone without the finance role.
+
+00:00:31.280 --> 00:00:37.020
+Context-based access: same person, different situation. Off the trusted network, without
+
+00:00:37.020 --> 00:00:42.760
+recent M F A, or outside the grant window, access narrows.
+
+00:00:42.760 --> 00:00:48.500
+A missing signal fails closed.
+
+00:00:49.600 --> 00:00:53.140
+Relations give a reason to know: the clinician who treats a
+
+00:00:53.140 --> 00:00:56.680
+patient. They form a graph, and every answer carries its path.
+
+00:00:56.680 --> 00:01:00.220
+A relation never lifts a clearance.
+
+00:01:01.320 --> 00:01:05.670
+Bell La Padula, nineteen seventy-three, for confidentiality: no read up, no
+
+00:01:05.670 --> 00:01:10.020
+write down. Secrets never flow to a lower level.
+
+00:01:11.120 --> 00:01:16.350
+Biba, nineteen seventy-seven, mirrors it for integrity: no write up. Less
+
+00:01:16.350 --> 00:01:21.580
+trusted data cannot corrupt more trusted data.
+
+00:01:22.680 --> 00:01:27.090
+Clark Wilson, nineteen eighty-seven, for business integrity: sensitive changes run only
+
+00:01:27.090 --> 00:01:31.500
+through certified commands, with separation of duty and a single-use token.
+
+00:01:32.600 --> 00:01:37.005
+Every request runs them in one fixed order: roles, the mandatory
+
+00:01:37.005 --> 00:01:41.410
+models, need-to-know, attributes, context, then certified commands and separation of duty.
+
+00:01:41.410 --> 00:01:45.815
+No tenant rule can reorder them or switch them off. One
+
+00:01:45.815 --> 00:01:50.220
+deny stops the request.
+
+00:01:51.320 --> 00:01:54.650
+These are the models classified defence systems were built on. Qadamar
+
+00:01:54.650 --> 00:01:57.980
+brings them together in one self-hosted engine.

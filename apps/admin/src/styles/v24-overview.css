@@ -1,0 +1,138 @@
+/* Adapted from CodeXR Glassy Dashboard v24 (purchased by the owner) — styles/studio.css (hero), cards.css (KPI
+   tiles, ring). The coral hero becomes the green "needs your attention" card; text on it stays at least 4.5:1. */
+
+.v24-bento { display: grid; gap: 18px; }
+
+/* ---------------- hero ---------------- */
+#app-shell-root .v24-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+  min-height: 240px;
+  padding: 28px 30px;
+  overflow: hidden;
+  border-radius: 30px;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background:
+    radial-gradient(circle at 90% 8%, rgba(255, 255, 255, 0.14), transparent 40%),
+    radial-gradient(circle at 8% 115%, rgba(120, 230, 160, 0.08), transparent 50%),
+    linear-gradient(135deg, color-mix(in srgb, var(--v24-accent) 85%, #00320f), color-mix(in srgb, var(--v24-accent-deep) 80%, #00200a));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 30px 60px -34px rgba(0, 92, 37, 0.9);
+}
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 650;
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+.hero-tag i { width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3); }
+.v24-hero h2 {
+  max-width: 560px;
+  margin: 14px 0 0;
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 620;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.v24-hero h2 em {
+  padding: 0 0.04em;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.1em;
+  background: linear-gradient(transparent 84%, rgba(255, 255, 255, 0.3) 84%, rgba(255, 255, 255, 0.3) 92%, transparent 92%);
+}
+.v24-hero p { max-width: 520px; margin: 10px 0 0; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.92); }
+.hero-stats { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 18px; }
+.h-stat {
+  display: grid;
+  gap: 1px;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid rgba(255, 255, 255, 0.4);
+  animation: v24-rise 0.7s var(--v24-ease-out) both;
+  animation-delay: calc(var(--base, 0ms) + 500ms + var(--s) * 90ms);
+}
+.h-stat b { font-size: 24px; font-weight: 620; letter-spacing: -0.02em; }
+.h-stat small { font-size: 12.5px; color: rgba(255, 255, 255, 0.9); }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.hero-cta:empty { display: none; }
+#app-shell-root .hero-cta .btn { min-height: 44px; padding: 0 20px; border-radius: 999px; font-size: 14.5px; text-decoration: none; }
+#app-shell-root .hero-cta .btn.v24-btn-light { background: #fff; color: #0b2a17; border: 0; box-shadow: 0 12px 26px -14px rgba(0, 0, 0, 0.6); }
+#app-shell-root .hero-cta .btn.v24-btn-light:hover:not(:disabled) { background: #eef8f1; }
+#app-shell-root .hero-cta .btn.v24-btn-outline { background: rgba(255, 255, 255, 0.08); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.6); }
+#app-shell-root .hero-cta .btn.v24-btn-outline:hover:not(:disabled) { background: rgba(255, 255, 255, 0.18); }
+.hero-orbit { display: grid; place-items: center; width: 200px; height: 200px; }
+
+/* ring */
+.ring { position: relative; }
+.ring svg { overflow: visible; }
+.ring-track { fill: none; stroke: rgba(255, 255, 255, 0.2); }
+.ring-arc { fill: none; stroke-linecap: round; transition: stroke-dashoffset 1.8s var(--v24-ease-out); }
+.ring-head { transition: transform 1.8s var(--v24-ease-out); }
+.ring-glow { fill: #fff; opacity: 0.35; }
+.ring-dot { fill: var(--v24-accent-deep); }
+.ring-mid { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring-mid b { font-size: 38px; font-weight: 620; letter-spacing: -0.03em; color: #fff; }
+.ring-mid > span { font-size: 12.5px; color: rgba(255, 255, 255, 0.9); }
+
+/* ---------------- KPI tiles: numbers roll in like slot reels ---------------- */
+.v24-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+#app-shell-root .v24-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 20px 20px 18px;
+  border-radius: 26px;
+  color: var(--ds-text);
+  text-decoration: none;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  border: 1px solid var(--tile-edge);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 22px 44px -32px rgba(0, 0, 0, 0.8);
+  transform-style: preserve-3d;
+  transition: background-color 0.25s, border-color 0.25s;
+}
+#app-shell-root .v24-kpi:hover { border-color: rgba(255, 255, 255, 0.24); text-decoration: none; }
+.v24-kpi > * { position: relative; z-index: 1; }
+.kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kpi-ic {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.6s var(--v24-spring);
+}
+.kpi-ic svg { width: 19px; height: 19px; }
+.v24-kpi:hover .kpi-ic { transform: rotate(-12deg) scale(1.1); }
+.kpi-flag { white-space: nowrap; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: #ffd79a; background: rgba(240, 170, 60, 0.16); box-shadow: inset 0 0 0 1px rgba(240, 170, 60, 0.35); }
+.kpi-num { font-size: clamp(32px, 2.8vw, 42px); font-weight: 620; letter-spacing: -0.04em; transform: translateZ(30px); }
+.kpi-foot { display: grid; min-width: 0; }
+.kpi-foot strong, .kpi-foot small { overflow-wrap: anywhere; }
+.kpi-foot strong { font-size: 14.5px; font-weight: 620; }
+.kpi-foot small { margin-top: 3px; font-size: 12.5px; color: var(--ds-text-secondary); }
+.v24-kpi[data-attention="true"] .kpi-ic { background: rgba(240, 170, 60, 0.2); color: #ffd79a; }
+
+@media (max-width: 1200px) { .v24-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  #app-shell-root .v24-hero { grid-template-columns: minmax(0, 1fr); padding: 22px 20px; border-radius: 26px; }
+  .hero-orbit { display: none; }
+}
+@media (max-width: 640px) { .v24-kpis { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-contrast: more) {
+  #app-shell-root .v24-hero { background: #005c25; }
+  #app-shell-root .v24-kpi { background: #1c1f24; }
+}

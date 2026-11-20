@@ -1,0 +1,47 @@
+[
+  {
+    "id": "intro",
+    "start": 0,
+    "dur": 8.6
+  },
+  {
+    "id": "billes",
+    "start": 8.6,
+    "dur": 8.92
+  },
+  {
+    "id": "paiement",
+    "start": 17.52,
+    "dur": 8.24
+  },
+  {
+    "id": "urgence",
+    "start": 25.759999999999998,
+    "dur": 22.08
+  },
+  {
+    "id": "niveaux",
+    "start": 47.839999999999996,
+    "dur": 12.24
+  },
+  {
+    "id": "contexte",
+    "start": 60.08,
+    "dur": 12.4
+  },
+  {
+    "id": "regles",
+    "start": 72.48,
+    "dur": 10.08
+  },
+  {
+    "id": "journal",
+    "start": 82.56,
+    "dur": 8.6
+  },
+  {
+    "id": "fin",
+    "start": 91.16,
+    "dur": 6.72
+  }
+]

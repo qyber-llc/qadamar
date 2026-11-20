@@ -1,0 +1,87 @@
+{
+  "name": "authzen-todo-interop",
+  "schema": {
+    "compartments": [],
+    "resourceTypes": {
+      "user": {
+        "actions": {
+          "can_read_user": { "kind": "read" }
+        }
+      },
+      "todo": {
+        "actions": {
+          "can_read_todos": { "kind": "read" },
+          "can_create_todo": { "kind": "write" },
+          "can_update_todo": { "kind": "write" },
+          "can_delete_todo": { "kind": "delete" }
+        }
+      }
+    }
+  },
+  "rbac": {
+    "roles": {
+      "viewer": {
+        "grants": [
+          { "resourceType": "user", "actions": ["can_read_user"] },
+          { "resourceType": "todo", "actions": ["can_read_todos"] }
+        ]
+      },
+      "editor": {
+        "inherits": ["viewer"],
+        "grants": [
+          { "resourceType": "todo", "actions": ["can_create_todo"] }
+        ]
+      },
+      "admin": {
+        "inherits": ["editor"],
+        "grants": [
+          { "resourceType": "todo", "actions": ["can_delete_todo"] }
+        ]
+      },
+      "evil_genius": {
+        "inherits": ["editor"],
+        "grants": [
+          { "resourceType": "todo", "actions": ["can_update_todo"] }
+        ]
+      }
+    }
+  },
+  "mandatory": {
+    "trustedRoles": [],
+    "untrustedNetworkMaxLevel": 2,
+    "compartmentsRequireTrustedNetwork": true,
+    "bibaNoReadDownActions": []
+  },
+  "needToKnow": {
+    "mode": "off",
+    "protect": {},
+    "breakGlassMaxHours": 4,
+    "breakGlassNotify": []
+  },
+  "abac": [
+    {
+      "id": "owner-todo-write",
+      "description": "An editor may update or delete a todo owned by that user",
+      "effect": "permit",
+      "resourceTypes": ["todo"],
+      "actions": ["can_update_todo", "can_delete_todo"],
+      "when": {
+        "op": "and",
+        "args": [
+          {
+            "op": "or",
+            "args": [
+              { "op": "contains", "left": { "path": "subject.roles" }, "right": { "value": "editor" } },
+              { "op": "contains", "left": { "path": "subject.roles" }, "right": { "value": "admin" } },
+              { "op": "contains", "left": { "path": "subject.roles" }, "right": { "value": "evil_genius" } }
+            ]
+          },
+          { "op": "eq", "left": { "path": "resource.owner" }, "right": { "path": "subject.attrs.email" } }
+        ]
+      }
+    }
+  ],
+  "abacContent": [],
+  "sod": [],
+  "clarkWilson": { "tokenTtlSeconds": 15 }
+}

@@ -1,0 +1,32 @@
+# Cluster mode runs the Qadamar pods as a StatefulSet: stable pod names (gate-0, gate-1) are stable GATE_NODE_IDs, so a
+# restarted node continues its own audit chain. The pod template is the base Deployment's (copied by the replacement
+# in kustomization.yaml, then the Deployment is removed), so both modes share one definition.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gate
+  labels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server, app.kubernetes.io/part-of: qadamar}
+spec:
+  serviceName: gate-nodes
+  replicas: 2
+  revisionHistoryLimit: 5
+  # both pods start together; a rolling update replaces one pod at a time (the other keeps deciding)
+  podManagementPolicy: Parallel
+  updateStrategy: {type: RollingUpdate}
+  selector:
+    matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}
+  template: {}
+---
+# Headless: one stable DNS name per node (gate-0.gate-nodes.<namespace>.svc), the leader's internal address that
+# followers forward admin and SCIM requests to. Not for clients: they use the Service gate (any node).
+apiVersion: v1
+kind: Service
+metadata:
+  name: gate-nodes
+  labels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}
+  ports:
+    - {name: http, port: 8787, targetPort: http, protocol: TCP}

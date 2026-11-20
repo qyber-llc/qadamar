@@ -1,0 +1,4 @@
+/* The light visual language shared with the Gate website and console. */
+html,body { background:var(--gate-bg); }
+svg { font-family:var(--gate-font-sans); }
+.m { font-family:var(--gate-font-mono); }

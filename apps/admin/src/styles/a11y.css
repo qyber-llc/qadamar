@@ -1,0 +1,84 @@
+/* Accessibility layer (WCAG 2.2 AA). Tokens only; imported once from AppShell. */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Target size (2.5.8): 24px floor, 32px where the layout allows. */
+.btn-sm {
+  min-height: 32px;
+}
+
+.row-action-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
+}
+
+a.rule-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+/* Tab-style filter buttons now expose state through aria-pressed. */
+.tab-btn[aria-pressed="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* Selected audit row: a non-colour cue in addition to the background. */
+tr.selected-row .row-action-btn::before {
+  content: "\203A\00a0" / "";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root { --inline-flow: 1; }
+:root:dir(rtl) { --inline-flow: -1; }
+
+/* Codes and numeric values keep their reading order in either language. */
+code, pre, .mono, .num, .metric-value, .nav-count, .rail-badge, .hdr-pill b, .sp-figure strong,
+input[type="number"], input[inputmode="numeric"], #signin-username, #signin-password, #signin-code, .secret-row input,
+.two-step-keys input, .two-step-codes {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+:dir(rtl) .rail-toggle svg, :dir(rtl) .rail-signout svg { transform: scaleX(-1); }
+:dir(rtl) .v24-switch[aria-checked="true"] i { translate: -16px 0; }
+:dir(rtl) .words { letter-spacing: normal; }
+
+@media (max-width: 400px) {
+  .grid-2, .grid-3, .grid-4, .grid-2-1 { grid-template-columns: minmax(0, 1fr); }
+  .topbar, .topbar-right { flex-wrap: wrap; height: auto; }
+  .screen-header, .card-title { overflow-wrap: anywhere; }
+  input, select, textarea { max-inline-size: 100%; min-inline-size: 0; }
+}
+
+@media (forced-colors: active) {
+  #app-shell-root, .v24-rail, .signin-splash { color: CanvasText; background: Canvas; }
+  #app-shell-root::before, .v24-rail-pill::before { background: Canvas; backdrop-filter: none; }
+  #app-shell-root :is(.card, .table-wrap, .modal-panel, .drawer-panel),
+  .v24-rail-pill, .signin-card { border: 1px solid CanvasText; }
+  :focus-visible { outline: 2px solid Highlight !important; outline-offset: 2px; }
+  [aria-pressed="true"], [aria-current="page"], [aria-checked="true"] { outline: 2px solid Highlight; }
+}

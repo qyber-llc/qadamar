@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-20",
+  "package_tests": {
+    "total": 943,
+    "passed": 828,
+    "skipped": 115,
+    "failed": 0
+  },
+  "console_tests": {
+    "passed": 101,
+    "failed": 0
+  },
+  "python_sdk_tests": {
+    "passed": 39,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "console_build": "passed",
+  "films": [
+    {
+      "name": "models",
+      "duration": 119.08,
+      "video": "h264",
+      "audio": "aac",
+      "dimensions": "1920x1080",
+      "pixel_format": "yuv420p",
+      "decode_check": "passed by renderer",
+      "english_captions": true,
+      "browser_start": "passed",
+      "browser_unmuted": true,
+      "browser_english_track": "showing"
+    },
+    {
+      "name": "sectors",
+      "duration": 110.92,
+      "video": "h264",
+      "audio": "aac",
+      "dimensions": "1920x1080",
+      "pixel_format": "yuv420p",
+      "decode_check": "passed by renderer",
+      "english_captions": true,
+      "browser_start": "passed",
+      "browser_unmuted": true,
+      "browser_english_track": "showing"
+    },
+    {
+      "name": "usecases",
+      "duration": 97.88,
+      "video": "h264",
+      "audio": "aac",
+      "dimensions": "1920x1080",
+      "pixel_format": "yuv420p",
+      "decode_check": "passed by renderer",
+      "english_captions": true,
+      "browser_start": "passed",
+      "browser_unmuted": true,
+      "browser_english_track": "showing"
+    }
+  ],
+  "console_login": {
+    "user": "amira",
+    "result": "passed"
+  },
+  "hosted_explorer": "six precomputed results from the actual engine; trusted allows read/export/update; untrusted denies all three",
+  "limits": [
+    "No real iPhone or Android test",
+    "No human listening sign-off",
+    "No full PostgreSQL/Docker/formal CI gate in this run",
+    "English caption word timing is approximate within a scene"
+  ],
+  "credentials_in_archives": false,
+  "secret_scan": {
+    "tool": "gitleaks 8.30.1",
+    "findings": 0
+  }
+}

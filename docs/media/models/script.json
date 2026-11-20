@@ -1,0 +1,51 @@
+{
+  "engine": "Higgsfield seed_audio, preset voice Petra (English)",
+  "voiceId": "0c63637d-2ecb-5bda-9bbe-38894aa9a876",
+  "voiceType": "preset",
+  "output": "qadamar-models.mp4",
+  "fps": 25,
+  "tempo": 1.19,
+  "padSeconds": 1.1,
+  "scenes": [
+    {
+      "id": "intro",
+      "spoken": "Who may see what? Seven models answer it, each from a different angle. Qadamar combines them in one decision."
+    },
+    {
+      "id": "rbac",
+      "spoken": "Role-based access: rights follow the job. An analyst role, a finance role. Simple, but a role alone knows nothing about the record."
+    },
+    {
+      "id": "abac",
+      "spoken": "Attribute-based access: rules read the person, the record and its content. A financial amount is masked for anyone without the finance role."
+    },
+    {
+      "id": "cbac",
+      "spoken": "Context-based access: same person, different situation. Off the trusted network, without recent M F A, or outside the grant window, access narrows. A missing signal fails closed."
+    },
+    {
+      "id": "rebac",
+      "spoken": "Relations give a reason to know: the clinician who treats a patient. They form a graph, and every answer carries its path. A relation never lifts a clearance."
+    },
+    {
+      "id": "blp",
+      "spoken": "Bell La Padula, nineteen seventy-three, for confidentiality: no read up, no write down. Secrets never flow to a lower level."
+    },
+    {
+      "id": "biba",
+      "spoken": "Biba, nineteen seventy-seven, mirrors it for integrity: no write up. Less trusted data cannot corrupt more trusted data."
+    },
+    {
+      "id": "clarkwilson",
+      "spoken": "Clark Wilson, nineteen eighty-seven, for business integrity: sensitive changes run only through certified commands, with separation of duty and a single-use token."
+    },
+    {
+      "id": "combine",
+      "spoken": "Every request runs them in one fixed order: roles, the mandatory models, need-to-know, attributes, context, then certified commands and separation of duty. No tenant rule can reorder them or switch them off. One deny stops the request."
+    },
+    {
+      "id": "outro",
+      "spoken": "These are the models classified defence systems were built on. Qadamar brings them together in one self-hosted engine."
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+# Cluster mode (GATE_CLUSTER=true, docs/API.md §3.9.1, docs/MANAGED-OFFER.md §6a): every Qadamar pod decides against the
+# shared PostgreSQL and is Ready; the pod holding the advisory lock is the leader. Clients reach any pod through the
+# Service gate: a follower forwards /admin/ and /scim/ to the leader over the internal network (signed hop, key derived
+# from SIGNING_KEY_SEAL), and answers 409 not_leader only when it does not know the leader. GET /leaderz is 200 on
+# the leader only. Add it to any overlay: `components: [../../components/cluster]`. Without it the tenant stays
+# active/standby.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+# the StatefulSet (stable pod names) and the headless Service gate-nodes, running the base Deployment's pod template
+components: [nodes]
+configMapGenerator:
+  - name: gate-config
+    behavior: merge
+    literals:
+      - GATE_CLUSTER=true
+patches:
+  - patch: |-
+      $patch: delete
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata: {name: gate}
+  - target: {kind: StatefulSet, name: gate}
+    patch: |-
+      # GATE_NODE_ID is the pod name: gate-0, gate-1, the same after every restart, so each node continues its own
+      # audit chain. A retired id (scaled down) keeps its chain, verified and anchored; it gets no new rows unless a
+      # pod with that name returns, which continues it (docs/API.md §3.9.1).
+      - {op: add, path: /spec/template/spec/containers/0/env/-, value: {name: GATE_NODE_ID, valueFrom: {fieldRef: {fieldPath: metadata.name}}}}
+      - {op: add, path: /spec/template/spec/containers/0/env/-, value: {name: POD_NAMESPACE, valueFrom: {fieldRef: {fieldPath: metadata.namespace}}}}
+      # PARAMETER: http behind a TLS-terminating ingress; https when the node serves TLS itself (TLS_CERT_FILE; its
+      # certificate must then name *.gate-nodes.<namespace>.svc). Only composes GATE_ADVERTISE_URL below.
+      - {op: add, path: /spec/template/spec/containers/0/env/-, value: {name: GATE_NODE_SCHEME, value: http}}
+      # the leader's internal address, published in PostgreSQL while it leads; followers forward admin and SCIM to it
+      - {op: add, path: /spec/template/spec/containers/0/env/-, value: {name: GATE_ADVERTISE_URL, value: "$(GATE_NODE_SCHEME)://$(GATE_NODE_ID).gate-nodes.$(POD_NAMESPACE).svc:8787"}}
+  # followers reach the leader's port 8787 directly (forwarded admin and SCIM requests)
+  - target: {kind: NetworkPolicy, name: gate-ingress}
+    patch: |-
+      - op: add
+        path: /spec/ingress/-
+        value: {from: [{podSelector: {matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}}}], ports: [{port: 8787, protocol: TCP}]}
+  - target: {kind: NetworkPolicy, name: gate-egress-database}
+    patch: |-
+      - op: add
+        path: /spec/egress/-
+        value: {to: [{podSelector: {matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: server}}}], ports: [{port: 8787, protocol: TCP}]}

@@ -1,0 +1,8 @@
+{
+  "name": "gate-film-renderer",
+  "private": true,
+  "description": "Pinned SVG renderer for the English Petra product films",
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

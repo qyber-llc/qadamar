@@ -1,0 +1,309 @@
+.operations-screen {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.operations-screen .grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.operations-screen .grid-2 > *,
+.operations-screen .form-group,
+.operations-screen .screen-header > *,
+.operations-screen .table-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.operations-screen .table-wrap {
+  overscroll-behavior-x: contain;
+}
+
+.operations-screen table {
+  min-width: 760px;
+  table-layout: fixed;
+}
+
+.operations-screen th,
+.operations-screen td {
+  padding: var(--space-1) var(--space-15);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.operations-screen th,
+.operations-screen label,
+.operations-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.operations-label {
+  margin: 0 0 var(--space-1);
+}
+
+.operations-screen strong {
+  font-weight: 600;
+}
+
+.operations-meta,
+.operations-screen .metric-sub {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.operations-screen .mono,
+.operations-countdown,
+.operations-screen .num {
+  font-variant-numeric: tabular-nums;
+}
+
+.operations-screen .btn,
+.operations-screen .row-action-btn,
+.operations-screen .tab-btn,
+.operations-screen select,
+.operations-screen input,
+.operations-screen summary,
+.operations-screen a:not(.btn) {
+  min-height: 40px;
+  min-width: 40px;
+}
+
+.operations-screen .btn,
+.operations-screen .row-action-btn {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.operations-screen a:not(.btn) {
+  display: inline-flex;
+  align-items: center;
+}
+
+.operations-screen input,
+.operations-screen select,
+.operations-screen textarea {
+  max-width: 100%;
+}
+
+.operations-screen :is(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.operations-screen :is(input, select, textarea):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.operations-screen :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.operations-screen .tab-btn:hover,
+.operations-screen .row-action-btn:hover,
+.operations-screen summary:hover {
+  color: var(--accent);
+  background: var(--bg-subtle);
+}
+
+.operations-screen .badge {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.operations-grants-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.operations-grants-layout > .card {
+  margin-bottom: 0;
+}
+
+.operations-active-grants {
+  border-color: var(--warn-border);
+}
+
+.operations-grant {
+  padding: var(--space-2);
+  border: 1px solid var(--border-color);
+  border-inline-start: var(--space-05) solid var(--warn-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.operations-grant-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: start;
+  margin-bottom: var(--space-15);
+}
+
+.operations-grant-heading h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.operations-countdown-block {
+  text-align: end;
+}
+
+.operations-countdown {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--warn-text);
+}
+
+.operations-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.operations-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.operations-selection > span:first-child {
+  min-width: 0;
+}
+
+.operations-revoke {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+}
+
+.operations-approval-detail {
+  border-color: var(--accent);
+}
+
+.operations-approval-detail > .card-title {
+  justify-content: flex-start;
+}
+
+.operations-change-queue {
+  margin-top: var(--space-3);
+}
+
+/* table-layout: fixed sizes columns from the header row, so widths go on the th */
+.operations-change-queue th.operations-change-col {
+  width: 40%;
+}
+
+.operations-change-queue th.operations-select-col {
+  width: 48px;
+}
+
+/* the 40px min size above is for buttons and text fields; a checkbox draws as a box at that size */
+.operations-change-queue input[type="checkbox"] {
+  min-width: 0;
+  min-height: 0;
+  width: 24px;
+  height: 24px;
+  accent-color: var(--accent);
+}
+
+.operations-screen .operations-review-table {
+  min-width: 1120px;
+}
+
+.operations-screen .operations-review-table th:last-child {
+  width: 360px;
+}
+
+.operations-evidence {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--space-1);
+}
+
+.operations-evidence summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: var(--space-1);
+}
+
+.operations-evidence .code-block {
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 639px) {
+  .operations-screen .grid-2,
+  .operations-grant-heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .operations-countdown-block {
+    text-align: start;
+  }
+
+  .operations-screen .form-group {
+    flex-basis: 100%;
+  }
+
+  .operations-screen .filter-bar > .form-group {
+    max-width: 100% !important;
+  }
+
+}
+
+.operations-screen .operations-incident-table {
+  min-width: 960px;
+}
+
+.operations-incident-table th:first-child {
+  width: 26%;
+}
+
+.operations-incident-table th:last-child {
+  width: 30%;
+}
+
+/* Credentials and keys: the secret shown once */
+.secret-panel { margin-bottom: var(--space-2); }
+.secret-panel .card-title { margin: 0 0 4px; }
+.secret-panel .card-title:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.secret-warning { margin: 0 0 8px; }
+.secret-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 4px 0; }
+.secret-row input { flex: 1 1 260px; min-width: 0; font-family: var(--font-mono); }
+
+/* Two-step sign-in */
+.two-step-form { margin-top: var(--space-2); }
+.two-step-form .form-group { max-width: 420px; margin-bottom: var(--space-15); }
+.two-step-step { margin: var(--space-2) 0 var(--space-05); font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.two-step-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.two-step-enrol { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-start; }
+.two-step-qr { padding: var(--space-1); background: #ffffff; border-radius: var(--radius-md); line-height: 0; }
+.two-step-keys { flex: 1 1 280px; min-width: 0; }
+.two-step-keys .form-group { max-width: none; }
+.two-step-keys input { width: 100%; font-family: var(--font-mono); }
+.two-step-codes { display: block; width: 100%; max-width: 420px; margin: 4px 0 8px; font-family: var(--font-mono); resize: none; }
+.field-error { margin: 4px 0 0; color: var(--deny-text); font-size: 13px; }
+
+/* the PEP resource types: a fieldset laid out like the other form groups, its legend like their labels */
+fieldset.form-group { border: 0; margin: 0; padding: 0; }
+fieldset.form-group > legend { padding: 0; margin-bottom: 4px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }

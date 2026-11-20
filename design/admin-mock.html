@@ -1,0 +1,3373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qadamar — Control Plane &amp; Admin Console</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-app: #f4f5f7;
+      --bg-surface: #ffffff;
+      --bg-subtle: #ebedf0;
+      --bg-code: #f0f2f5;
+      --text-primary: #11161c;
+      --text-secondary: #454f5b;
+      --text-muted: #63707e;
+      --border-color: #cbd2d9;
+      --border-strong: #8d99a6;
+      --accent: #1a4b84;
+      --accent-hover: #123660;
+      --accent-subtle: #e6eef8;
+      --allow-bg: #e3f3e8;
+      --allow-text: #135327;
+      --allow-border: #8ac99d;
+      --deny-bg: #fbe9e9;
+      --deny-text: #7d1a1a;
+      --deny-border: #e09b9b;
+      --warn-bg: #fcf3dc;
+      --warn-text: #6b4c00;
+      --warn-border: #dfb85c;
+      --lock-bg: #eaecef;
+      --lock-text: #38424d;
+      --focus-ring: #005fcc;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-app: #0d1117;
+        --bg-surface: #161b22;
+        --bg-subtle: #21262d;
+        --bg-code: #090d11;
+        --text-primary: #e6edf3;
+        --text-secondary: #9ea7b3;
+        --text-muted: #7d8590;
+        --border-color: #30363d;
+        --border-strong: #484f58;
+        --accent: #478be6;
+        --accent-hover: #6cb6ff;
+        --accent-subtle: #172b45;
+        --allow-bg: #122d1f;
+        --allow-text: #6bc486;
+        --allow-border: #2b6643;
+        --deny-bg: #34171a;
+        --deny-text: #f48b8b;
+        --deny-border: #782e33;
+        --warn-bg: #2e240e;
+        --warn-text: #e3b341;
+        --warn-border: #6e5211;
+        --lock-bg: #21262d;
+        --lock-text: #b1bac4;
+        --focus-ring: #58a6ff;
+      }
+    }
+
+    html[data-theme="light"] {
+      --bg-app: #f4f5f7;
+      --bg-surface: #ffffff;
+      --bg-subtle: #ebedf0;
+      --bg-code: #f0f2f5;
+      --text-primary: #11161c;
+      --text-secondary: #454f5b;
+      --text-muted: #63707e;
+      --border-color: #cbd2d9;
+      --border-strong: #8d99a6;
+      --accent: #1a4b84;
+      --accent-hover: #123660;
+      --accent-subtle: #e6eef8;
+      --allow-bg: #e3f3e8;
+      --allow-text: #135327;
+      --allow-border: #8ac99d;
+      --deny-bg: #fbe9e9;
+      --deny-text: #7d1a1a;
+      --deny-border: #e09b9b;
+      --warn-bg: #fcf3dc;
+      --warn-text: #6b4c00;
+      --warn-border: #dfb85c;
+      --lock-bg: #eaecef;
+      --lock-text: #38424d;
+      --focus-ring: #005fcc;
+    }
+
+    html[data-theme="dark"] {
+      --bg-app: #0d1117;
+      --bg-surface: #161b22;
+      --bg-subtle: #21262d;
+      --bg-code: #090d11;
+      --text-primary: #e6edf3;
+      --text-secondary: #9ea7b3;
+      --text-muted: #7d8590;
+      --border-color: #30363d;
+      --border-strong: #484f58;
+      --accent: #478be6;
+      --accent-hover: #6cb6ff;
+      --accent-subtle: #172b45;
+      --allow-bg: #122d1f;
+      --allow-text: #6bc486;
+      --allow-border: #2b6643;
+      --deny-bg: #34171a;
+      --deny-text: #f48b8b;
+      --deny-border: #782e33;
+      --warn-bg: #2e240e;
+      --warn-text: #e3b341;
+      --warn-border: #6e5211;
+      --lock-bg: #21262d;
+      --lock-text: #b1bac4;
+      --focus-ring: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.45;
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    /* Top Header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      flex-wrap: wrap;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .topbar-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Layout */
+    .layout {
+      display: flex;
+      min-height: calc(100vh - 53px);
+    }
+
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background-color: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .nav-list {
+      list-style: none;
+      margin: 0;
+      padding: 8px 0;
+    }
+
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      border-left: 3px solid transparent;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: inherit;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    .nav-btn[aria-current="page"] {
+      background-color: var(--accent-subtle);
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .nav-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 1px 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px 24px 48px;
+      max-width: 1280px;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* Invariant Banner */
+    .invariant-bar {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--accent);
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Screen Visibility */
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .screen-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .screen-title {
+      margin: 0 0 4px 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .screen-subtitle {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .api-pill-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .api-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 7px;
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+
+    /* Cards & Grids */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Tables */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    th {
+      background-color: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    tr.clickable-row {
+      cursor: pointer;
+    }
+
+    tr.clickable-row:hover {
+      background-color: var(--bg-subtle);
+    }
+
+    tr.selected-row {
+      background-color: var(--accent-subtle);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .badge-allow {
+      background-color: var(--allow-bg);
+      color: var(--allow-text);
+      border-color: var(--allow-border);
+    }
+
+    .badge-deny {
+      background-color: var(--deny-bg);
+      color: var(--deny-text);
+      border-color: var(--deny-border);
+    }
+
+    .badge-warn {
+      background-color: var(--warn-bg);
+      color: var(--warn-text);
+      border-color: var(--warn-border);
+    }
+
+    .badge-lock {
+      background-color: var(--lock-bg);
+      color: var(--lock-text);
+      border-color: var(--border-strong);
+    }
+
+    /* Forms & Buttons */
+    .form-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 160px;
+      flex: 1;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    select, input[type="text"], textarea {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      padding: 7px 9px;
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: 0;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 64px;
+    }
+
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border: 1px solid var(--border-strong);
+      background-color: var(--bg-subtle);
+      color: var(--text-primary);
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    .btn:hover:not(:disabled) {
+      background-color: var(--border-color);
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background-color: var(--deny-bg);
+      color: var(--deny-text);
+      border-color: var(--deny-border);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: var(--bg-surface);
+      color: var(--accent);
+      border-top: 2px solid var(--accent);
+    }
+
+    .code-block {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background-color: var(--bg-code);
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+    }
+
+    .diff-add {
+      background-color: var(--allow-bg);
+      color: var(--allow-text);
+      display: block;
+      padding: 1px 4px;
+    }
+
+    .diff-del {
+      background-color: var(--deny-bg);
+      color: var(--deny-text);
+      display: block;
+      padding: 1px 4px;
+    }
+
+    .notice-box {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    /* Responsive at 375px and mobile */
+    @media (max-width: 820px) {
+      .menu-toggle {
+        display: inline-block;
+      }
+      .layout {
+        position: relative;
+      }
+      .sidebar {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 25;
+        border-right: none;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar.open {
+        display: flex;
+      }
+      .main-content {
+        padding: 14px 12px 36px;
+      }
+      .topbar {
+        padding: 8px 12px;
+      }
+      .topbar-right, .topbar-item {
+        min-width: 0;
+        max-width: 100%;
+        flex-wrap: wrap;
+      }
+      .topbar-item .badge {
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="topbar" role="banner">
+    <div class="topbar-left">
+      <button type="button" class="menu-toggle" id="sidebarToggleBtn" aria-expanded="false" aria-controls="appSidebar">
+        Menu
+      </button>
+      <div class="brand">
+        <span>Qadamar</span>
+        <span class="brand-tag">CONTROL PLANE</span>
+        <span class="brand-tag">DOMAIN: CASE-FILES (TOY)</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="topbar-item">
+        <span class="badge badge-allow" id="headerChainBadge">CHAIN VERIFIED: 1,408 ROWS</span>
+        <span class="badge" id="headerBundleBadge">BUNDLE v24 (sha256:9f8a…3c1e)</span>
+      </div>
+      <div class="topbar-item">
+        <label for="activeAdminSelect">Session Persona:</label>
+        <select id="activeAdminSelect" aria-label="Active session administrator persona">
+          <option value="Alice" selected>Alice (Access Admin / Maker)</option>
+          <option value="Carol">Carol (Approver / Second Person)</option>
+          <option value="Eve">Eve (Security Officer / CIO)</option>
+          <option value="Frank">Frank (Auditor — Read-Only)</option>
+        </select>
+      </div>
+      <div class="topbar-item">
+        <label for="themeSelect">Theme:</label>
+        <select id="themeSelect" aria-label="Color scheme preference">
+          <option value="system" selected>System (prefers-color-scheme)</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Left Navigation Sidebar -->
+    <nav class="sidebar" id="appSidebar" aria-label="Admin console navigation">
+      <ul class="nav-list">
+        <li><button type="button" class="nav-btn" data-screen="screen-overview" aria-current="page"><span>1. Overview</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-model"><span>2. Attribute Model</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-policies"><span>3. Policies</span><span class="nav-count">v24</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-simulator"><span>4. Simulator</span><span class="nav-count">3 modes</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-approvals"><span>5. Approvals</span><span class="nav-count" id="navApprovalsCount">2</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-breakglass"><span>6. Break-Glass</span><span class="nav-count" id="navBgCount">1 active</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-reviews"><span>7. Access Reviews</span><span class="nav-count" id="navReviewsCount">4</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-audit"><span>8. Audit Explorer</span></button></li>
+        <li><button type="button" class="nav-btn" data-screen="screen-compliance"><span>9. Compliance Reports</span></button></li>
+      </ul>
+      <div class="sidebar-footer">
+        <div><strong>Air-Gapped Mode:</strong> Active (0 external calls)</div>
+        <div><strong>Content Isolation (P96):</strong> Enforced</div>
+        <div><strong>Hidden = Absent:</strong> 404 / No Count</div>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="mainContent">
+      <div class="invariant-bar" role="status">
+        <div>
+          <strong>Invariants active:</strong> Administrators manage access over metadata &amp; IDs only (zero record text). Hidden resources remain absent (no counts). Every access-broadening change requires a simulation preview, a written reason, and two-person approval (<span class="mono">maker != checker</span>).
+        </div>
+        <div class="mono" id="activePersonaBanner">Logged in: Alice (Access Admin)</div>
+      </div>
+
+      <!-- SCREEN 1: OVERVIEW -->
+      <section class="screen active" id="screen-overview" aria-labelledby="title-overview">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-overview">1. Operational Overview</h1>
+            <p class="screen-subtitle">Protected application: Fictional Civic Case Files (<span class="mono">case-files-app</span>). Stateless PDP fleet loaded from signed bundle.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">GET /.well-known/authzen-configuration</span>
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="card">
+            <div class="metric-label">Published Policy Bundle</div>
+            <div class="metric-value">v24</div>
+            <div class="metric-sub mono">sha256:9f8a7c12…40b23c1e</div>
+            <div class="metric-sub">Signed Ed25519 · Bundle age: 14m (max 24h)</div>
+          </div>
+          <div class="card">
+            <div class="metric-label">Two-Person Approvals Queue</div>
+            <div class="metric-value" id="overviewApprovalsMetric">2 Pending</div>
+            <div class="metric-sub">1 authored by you (self-approval blocked)</div>
+          </div>
+          <div class="card">
+            <div class="metric-label">Active Break-Glass Grants</div>
+            <div class="metric-value" id="overviewBgMetric">1 Active</div>
+            <div class="metric-sub mono" id="overviewBgSub">Dan → CASE-12 (03:14:22 left)</div>
+          </div>
+          <div class="card">
+            <div class="metric-label">Audit Hash Chain (P73)</div>
+            <div class="metric-value">VERIFIED</div>
+            <div class="metric-sub mono">Head: #1408 (d41e9a…88b1)</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="card-title">
+              <span>Fixed Core Evaluation Pipeline (ARCHITECTURE.md §3.2)</span>
+              <span class="badge badge-lock">IMMUTABLE ORDER</span>
+            </h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Step</th>
+                    <th>Stage</th>
+                    <th>Rule IDs</th>
+                    <th>Mode / Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">1</td>
+                    <td>Inactive Subject Check</td>
+                    <td class="mono">P18-INACTIVE</td>
+                    <td><span class="badge badge-lock">LOCKED · DENY FIRST</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">2</td>
+                    <td>Role Eligibility (RBAC Matrix)</td>
+                    <td class="mono">P01-RBAC</td>
+                    <td><span class="badge badge-lock">LOCKED · MUST ALLOW</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">3</td>
+                    <td>Mandatory Lattice: BLP (<span class="mono">L0–L3</span>), Compartments, Trusted Network Cap, Biba Integrity</td>
+                    <td class="mono">P02, P03, P30, P40, BIBA-NWU, P121</td>
+                    <td><span class="badge badge-lock">LOCKED · CORE CODE</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">4</td>
+                    <td>Declared Relation Need-to-Know (never lifts Step 3)</td>
+                    <td class="mono">P105-NTK</td>
+                    <td><span class="badge badge-allow" id="overviewNtkBadge">ENFORCE</span></td>
+                  </tr>
+                  <tr>
+                    <td class="mono">5–6</td>
+                    <td>Tenant Cedar ABAC Policies &amp; ABAC Content-Attribute Redaction</td>
+                    <td class="mono">CEDAR-01..03, ABAC-CONTENT-FIN</td>
+                    <td><span class="badge">DATA · VERSIONED (v24)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">
+              <span>Immediate Governance Actions</span>
+              <span class="badge">DELEGATED SCOPE</span>
+            </h2>
+            <p class="metric-sub" style="margin-bottom:10px;">
+              Scoped to Case Files domain metadata. Out-of-scope resources are omitted without count.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div class="notice-box" style="margin:0; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div>
+                  <strong>Approval REQ-204:</strong> Grant <span class="mono">ORCHID</span> compartment to Carol (Maker: Carol).
+                </div>
+                <button type="button" class="btn btn-primary" onclick="switchScreen('screen-approvals')">Review Queue</button>
+              </div>
+              <div class="notice-box" style="margin:0; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div>
+                  <strong>Break-Glass BG-09:</strong> Dan opened 4h emergency access on <span class="mono">CASE-12</span>. Awaiting CIO review.
+                </div>
+                <button type="button" class="btn" onclick="switchScreen('screen-breakglass')">Inspect Break-Glass</button>
+              </div>
+              <div class="notice-box" style="margin:0; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div>
+                  <strong>Simulator:</strong> Test "What can X see", "Who can see Y", or preview a policy/attribute change.
+                </div>
+                <button type="button" class="btn" onclick="switchScreen('screen-simulator')">Open Simulator</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: ATTRIBUTE MODEL -->
+      <section class="screen" id="screen-model" aria-labelledby="title-model">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-model">2. Attribute Model &amp; Declared Relations</h1>
+            <p class="screen-subtitle">Schema v24 for toy domain "Case Files". Classification levels, compartments, Biba integrity and SQL/tuple relation sources.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /x/v1/filter</span>
+            <span class="api-pill">POST /x/v1/simulate</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="card-title">
+              <span>Classification Lattice (Bell-LaPadula P02 / P03 / P40)</span>
+              <span class="badge badge-lock">BUILT-IN LATTICE</span>
+            </h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Level</th>
+                    <th>Label</th>
+                    <th>Network Rule (P121)</th>
+                    <th>BLP Semantics</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono"><strong>L0</strong></td>
+                    <td>Public</td>
+                    <td>Any network</td>
+                    <td>No read up; no write down without trusted flag</td>
+                  </tr>
+                  <tr>
+                    <td class="mono"><strong>L1</strong></td>
+                    <td>Internal</td>
+                    <td>Any network</td>
+                    <td>Effective level = max(case, parent program)</td>
+                  </tr>
+                  <tr>
+                    <td class="mono"><strong>L2</strong></td>
+                    <td>Confidential</td>
+                    <td>Max level on untrusted network</td>
+                    <td>Requires clearance ≥ L2</td>
+                  </tr>
+                  <tr>
+                    <td class="mono"><strong>L3</strong></td>
+                    <td>Secret</td>
+                    <td><span class="badge badge-warn">Trusted CIDR Only (VPN)</span></td>
+                    <td>Denied from untrusted network regardless of clearance</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">
+              <span>Compartments (P30) &amp; Biba Integrity (BIBA-NWU)</span>
+              <span class="badge">ALL REQUIRED</span>
+            </h2>
+            <div class="table-wrap" style="margin-bottom:10px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Compartment</th>
+                    <th>Description (Metadata)</th>
+                    <th>Network Rule (P121)</th>
+                    <th>Holders</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono"><strong>ORCHID</strong></td>
+                    <td>Cross-border procurement inquiry</td>
+                    <td>Trusted network only</td>
+                    <td>Alice, Eve</td>
+                  </tr>
+                  <tr>
+                    <td class="mono"><strong>FALCON</strong></td>
+                    <td>Special protective operations</td>
+                    <td>Trusted network only</td>
+                    <td>Alice, Bob, Dan</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="notice-box" style="margin:0;">
+              <strong>Biba Integrity Lattice (BIBA-NWU):</strong> <span class="mono">verified &gt; system &gt; extracted &gt; derived</span>. No write up; no read down at case closure approval without audited acknowledgement.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">
+            <span>Subjects in Toy Domain (Metadata Only)</span>
+            <button type="button" class="btn" onclick="switchScreen('screen-simulator'); selectSimTab('mode-impact');">Propose Attribute Change in Simulator</button>
+          </h2>
+          <div class="table-wrap">
+            <table id="modelSubjectsTable">
+              <thead>
+                <tr>
+                  <th>Subject ID</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Clearance</th>
+                  <th>Compartments</th>
+                  <th>Trusted Declassifier</th>
+                  <th>Manager</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">
+            <span>Declared Relations — Reason-to-Know Sources (REBAC-ANALYSIS.md Option B + C-lite)</span>
+            <span class="badge">PUSHED DOWN TO SQL EXISTS</span>
+          </h2>
+          <p class="metric-sub" style="margin-bottom:10px;">
+            Relations supply <span class="mono">reason_to_know</span> (Step 4) only. A relation never lifts clearance (P02), compartments (P30) or network (P121).
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Relation Name</th>
+                  <th>Signature</th>
+                  <th>Source Type</th>
+                  <th>Validity / Bound</th>
+                  <th>Compiled SQL Predicate Pattern</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono"><strong>team_member</strong></td>
+                  <td class="mono">person → case_file</td>
+                  <td>Application table (<span class="mono">case_team</span>)</td>
+                  <td>Active assignment</td>
+                  <td class="mono">EXISTS (SELECT 1 FROM case_team ct WHERE ct.case_id = r.id AND ct.person_id = :sub)</td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>allocated</strong></td>
+                  <td class="mono">person → case_file</td>
+                  <td>Application table (<span class="mono">allocations</span>)</td>
+                  <td class="mono">valid while to_date &gt;= CURRENT_DATE</td>
+                  <td class="mono">EXISTS (SELECT 1 FROM allocations a WHERE a.case_id = r.id AND a.person_id = :sub AND a.to_date &gt;= :today)</td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>reports_to</strong></td>
+                  <td class="mono">person → person → case_file</td>
+                  <td>HR / Org hierarchy (<span class="mono">people.manager_id</span>)</td>
+                  <td>Transitive CTE · depth ≤ 20</td>
+                  <td class="mono">EXISTS (SELECT 1 FROM reporting_line rl JOIN case_team ct ON ct.person_id = rl.subordinate_id WHERE rl.manager_id = :sub AND ct.case_id = r.id)</td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>approved_grant</strong></td>
+                  <td class="mono">person → case_file</td>
+                  <td>Product tuple table (<span class="mono">ntk_grants</span>)</td>
+                  <td>Expiry ≤ 90 days · <span class="mono">maker != checker</span></td>
+                  <td class="mono">EXISTS (SELECT 1 FROM ntk_grants g WHERE g.object_id = r.id AND g.subject_id = :sub AND g.valid_to &gt;= :now)</td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>break_glass</strong></td>
+                  <td class="mono">person → case_file</td>
+                  <td>Product tuple table (<span class="mono">ntk_grants</span>)</td>
+                  <td>Fixed 4 hours · CIO notified &amp; reviewed</td>
+                  <td class="mono">EXISTS (SELECT 1 FROM ntk_grants bg WHERE bg.object_id = r.id AND bg.subject_id = :sub AND bg.kind = 'break_glass' AND bg.valid_to &gt;= :now)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: POLICIES -->
+      <section class="screen" id="screen-policies" aria-labelledby="title-policies">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-policies">3. Policies &amp; Immutable Versions</h1>
+            <p class="screen-subtitle">Built-in mandatory security models are locked in core code. Tenant policies are authored in Cedar and version-pinned.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /x/v1/simulate</span>
+            <span class="api-pill">POST /access/v1/evaluation</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">
+            <span>Built-in Mandatory Invariants (Non-Editable Core Code)</span>
+            <span class="badge badge-lock">LOCKED IN CORE · CANNOT BE DISABLED</span>
+          </h2>
+          <p class="metric-sub" style="margin-bottom:10px;">
+            Tenant Cedar policies run after Step 4 and can only narrow access. They cannot override or disable any rule below.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rule ID</th>
+                  <th>Model</th>
+                  <th>Invariant Definition</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono"><strong>P18-INACTIVE</strong></td>
+                  <td>Subject Lifecycle</td>
+                  <td>If <span class="mono">subject.status != 'active'</span>, deny immediately before all other checks.</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P01-RBAC</strong></td>
+                  <td>Role Eligibility</td>
+                  <td>Subject role must be eligible for <span class="mono">(resource.type, action)</span> in the tenant RBAC matrix.</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P02 / P40</strong></td>
+                  <td>Bell-LaPadula Read</td>
+                  <td>No read up: <span class="mono">effective_clearance &gt;= max(resource.level, parent.level)</span>.</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P03</strong></td>
+                  <td>Bell-LaPadula Write</td>
+                  <td>No write down or declassification unless <span class="mono">subject.trusted == true</span> and written reason is logged.</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P30-COMP</strong></td>
+                  <td>Compartments</td>
+                  <td>Every compartment on the resource must be held by the subject (<span class="mono">resource.compartments ⊆ subject.effective_compartments</span>).</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P121-NET</strong></td>
+                  <td>Network Condition</td>
+                  <td>Outside trusted CIDRs (<span class="mono">10.40.0.0/16</span>), effective clearance is capped at <span class="mono">L2</span> and effective compartments are empty (<span class="mono">∅</span>).</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P64 / P65</strong></td>
+                  <td>Clark-Wilson SoD</td>
+                  <td>No self-grant (<span class="mono">P64</span>); two-person maker-checker rule on policy publishing and access grants (<span class="mono">P65</span>).</td>
+                  <td><span class="badge badge-lock">LOCKED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>P105-NTK</strong></td>
+                  <td>Need-to-Know</td>
+                  <td>Subject must hold at least one active declared relation (<span class="mono">team_member</span>, <span class="mono">allocated</span>, <span class="mono">reports_to</span>, <span class="mono">approved_grant</span>, <span class="mono">break_glass</span>) to the case.</td>
+                  <td><span class="badge badge-allow">ENFORCE</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="form-row" style="justify-content:space-between; align-items:center;">
+              <h2 class="card-title" style="margin:0;">Tenant Policy Set — Cedar Text View</h2>
+              <div>
+                <label for="policyVersionSelect" style="display:inline; margin-right:6px;">Version:</label>
+                <select id="policyVersionSelect">
+                  <option value="v24" selected>v24 (Published · sha256:9f8a…3c1e)</option>
+                  <option value="v23">v23 (Superseded · sha256:4b11…09a4)</option>
+                  <option value="v25-draft">v25-draft (Candidate in Simulator)</option>
+                </select>
+              </div>
+            </div>
+            <pre class="code-block" id="cedarPolicyText">// Qadamar Tenant Policy Pack — Domain: Case Files (v24)
+// Evaluated at Step 5 (after P18, P01, P02/P40, P30, P121, P105-NTK)
+
+@id("CEDAR-01-READ-CASE")
+permit (
+  principal,
+  action == Action::"read",
+  resource is CaseFile
+) when {
+  resource.status != "archived_sealed" || principal.role == "security_officer"
+};
+
+@id("CEDAR-02-WRITE-ACTIVE-ONLY")
+forbid (
+  principal,
+  action == Action::"write",
+  resource is CaseFile
+) when {
+  resource.status == "closed"
+};
+
+@id("ABAC-CONTENT-FIN-ANNEX")
+// Step 6 Obligation: mask financial_annex segment unless finance-cleared or case_lead
+@obligation("mask_segment:financial_annex")
+permit (
+  principal,
+  action == Action::"read",
+  resource is CaseFile
+) when {
+  resource.has_financial_annex == true && principal.role != "case_lead"
+};</pre>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">
+              <span>Version Diff (<span class="mono">v23 → v24</span>) &amp; Publishing Rule</span>
+              <span class="badge">IMMUTABLE SNAPSHOTS</span>
+            </h2>
+            <div class="code-block" style="margin-bottom:12px;">
+              <span> // Diff between v23 (sha256:4b11…09a4) and v24 (sha256:9f8a…3c1e)</span>
+              <span> @id("CEDAR-02-WRITE-ACTIVE-ONLY")</span>
+              <span> forbid (principal, action == Action::"write", resource is CaseFile)</span>
+              <span class="diff-del">-when { resource.status == "archived_sealed" };</span>
+              <span class="diff-add">+when { resource.status == "closed" };</span>
+              <span> </span>
+              <span> // Declared relation "allocated" validity window tightened:</span>
+              <span class="diff-del">-relation allocated: valid while to_date &gt;= (today - 7d)</span>
+              <span class="diff-add">+relation allocated: valid while to_date &gt;= today</span>
+            </div>
+            <div class="notice-box">
+              <strong>Nothing applies without a preview:</strong> To publish a new policy version, run <strong>Mode C (Impact of a change before apply)</strong> in the Simulator, attach a written reason, and submit to the two-person Approvals queue.
+            </div>
+            <button type="button" class="btn btn-primary" onclick="switchScreen('screen-simulator'); selectSimTab('mode-impact');">
+              Simulate Candidate Policy Impact →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: SIMULATOR -->
+      <section class="screen" id="screen-simulator" aria-labelledby="title-simulator">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-simulator">4. Policy &amp; Access Simulator</h1>
+            <p class="screen-subtitle">Live in-page decision engine executing ARCHITECTURE.md §3.2 over the toy Case Files dataset (metadata only, zero content).</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /access/v1/search/resource</span>
+            <span class="api-pill">POST /access/v1/search/subject</span>
+            <span class="api-pill">POST /x/v1/filter</span>
+            <span class="api-pill">POST /x/v1/explain</span>
+            <span class="api-pill">POST /x/v1/simulate</span>
+          </div>
+        </div>
+
+        <div class="tab-bar" role="tablist" aria-label="Simulator Modes">
+          <button type="button" class="tab-btn" role="tab" id="tabBtnWhat" aria-selected="true" onclick="selectSimTab('mode-what')">
+            Mode A: What can X see? (search/resource + filter)
+          </button>
+          <button type="button" class="tab-btn" role="tab" id="tabBtnWho" aria-selected="false" onclick="selectSimTab('mode-who')">
+            Mode B: Who can see Y? (search/subject + explain)
+          </button>
+          <button type="button" class="tab-btn" role="tab" id="tabBtnImpact" aria-selected="false" onclick="selectSimTab('mode-impact')">
+            Mode C: Impact of a change before apply (simulate)
+          </button>
+        </div>
+
+        <!-- Mode A: What can X see -->
+        <div id="simPaneWhat" class="sim-pane">
+          <div class="card">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="simWhatSubject">Subject (X):</label>
+                <select id="simWhatSubject" onchange="runSimWhat()">
+                  <option value="Alice">Alice (L3 Secret · ORCHID, FALCON · case_lead)</option>
+                  <option value="Bob" selected>Bob (L2 Confidential · FALCON · investigator)</option>
+                  <option value="Carol">Carol (L3 Secret · No compartments · investigator)</option>
+                  <option value="Dan">Dan (L3 Secret · FALCON · senior_investigator)</option>
+                  <option value="Eve">Eve (L3 Secret · ORCHID · security_officer)</option>
+                  <option value="Frank">Frank (L1 Internal · Inactive contractor)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="simWhatAction">Action:</label>
+                <select id="simWhatAction" onchange="runSimWhat()">
+                  <option value="read" selected>read</option>
+                  <option value="write">write</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="simWhatNetwork">Network Context (P121):</label>
+                <select id="simWhatNetwork" onchange="runSimWhat()">
+                  <option value="trusted" selected>Trusted Network (10.40.12.8 — VPN)</option>
+                  <option value="untrusted">Untrusted Network (Public Wi-Fi — caps at L2, clears compartments)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="notice-box" id="simWhatSubjectSummary"></div>
+
+            <div class="table-wrap" style="margin-bottom:14px;">
+              <table id="simWhatTable">
+                <thead>
+                  <tr>
+                    <th>Resource ID</th>
+                    <th>Classification &amp; Compartments</th>
+                    <th>Status / Integrity</th>
+                    <th>Decision</th>
+                    <th>Rule IDs Fired</th>
+                    <th>Reason / Relation Path (<span class="mono">explain</span>)</th>
+                    <th>Obligations</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <div>
+              <div style="font-size:12px; font-weight:700; margin-bottom:4px;">
+                Compiled Parameterised SQL Predicate (<span class="mono">POST /x/v1/filter</span> — pushed down to Postgres &amp; RLS):
+              </div>
+              <pre class="code-block" id="simWhatSqlBox"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode B: Who can see Y -->
+        <div id="simPaneWho" class="sim-pane" style="display:none;">
+          <div class="card">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="simWhoResource">Target Resource (Y):</label>
+                <select id="simWhoResource" onchange="runSimWho()">
+                  <option value="CASE-7">CASE-7 — L3 Secret · [ORCHID] · open</option>
+                  <option value="CASE-11">CASE-11 — L2 Confidential · [FALCON] · open</option>
+                  <option value="CASE-12">CASE-12 — L3 Secret · [FALCON] · open</option>
+                  <option value="CASE-14" selected>CASE-14 — L2 Confidential · [] · open</option>
+                  <option value="CASE-15">CASE-15 — L3 Secret · [] · open</option>
+                  <option value="CASE-18">CASE-18 — L1 Internal · [] · closed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="simWhoAction">Action:</label>
+                <select id="simWhoAction" onchange="runSimWho()">
+                  <option value="read" selected>read</option>
+                  <option value="write">write</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="simWhoNetwork">Assumed Network Context (P121):</label>
+                <select id="simWhoNetwork" onchange="runSimWho()">
+                  <option value="trusted" selected>Trusted Network (VPN)</option>
+                  <option value="untrusted">Untrusted Network (caps at L2, clears compartments)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="notice-box" id="simWhoResourceSummary"></div>
+
+            <div class="table-wrap">
+              <table id="simWhoTable">
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Role &amp; Status</th>
+                    <th>Effective Clearance &amp; Compartments</th>
+                    <th>Decision</th>
+                    <th>Rule IDs Fired</th>
+                    <th>Explanation / Relation Path</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode C: Impact of a change before apply -->
+        <div id="simPaneImpact" class="sim-pane" style="display:none;">
+          <div class="card">
+            <h2 class="card-title">
+              <span>Propose a Change &amp; Compute Impact Delta (<span class="mono">POST /x/v1/simulate</span>)</span>
+              <span class="badge badge-warn">NOTHING APPLIES WITHOUT PREVIEW</span>
+            </h2>
+            <p class="metric-sub" style="margin-bottom:12px;">
+              Select one or more staged modifications below. The simulator evaluates every <span class="mono">(subject, case_file, action)</span> pair under the current published state (v24) versus the candidate state and displays all gained or lost permissions.
+            </p>
+
+            <div class="grid-2" style="margin-bottom:12px;">
+              <div class="notice-box" style="margin:0;">
+                <div style="font-weight:700; margin-bottom:8px;">Staged Change Toggles (Candidate Delta):</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+                    <input type="checkbox" id="chgGrantOrchidBob" checked onchange="runSimImpact()">
+                    <span><strong>Change 1:</strong> Grant compartment <span class="mono">ORCHID</span> to <strong>Bob</strong> (note: Bob is <span class="mono">L2</span>; verify whether <span class="mono">CASE-7 (L3)</span> stays denied by BLP <span class="mono">P02</span>).</span>
+                  </label>
+                  <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+                    <input type="checkbox" id="chgLowerCase7" checked onchange="runSimImpact()">
+                    <span><strong>Change 2:</strong> Declassify <span class="mono">CASE-7</span> from <span class="mono">L3 Secret</span> to <span class="mono">L2 Confidential</span> (keeps <span class="mono">ORCHID</span> compartment; Bob is allocated to <span class="mono">CASE-7</span>).</span>
+                  </label>
+                  <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+                    <input type="checkbox" id="chgGrantCarolCase15" onchange="runSimImpact()">
+                    <span><strong>Change 3:</strong> Add Need-to-Know grant on <span class="mono">CASE-15 (L3)</span> for <strong>Carol</strong> until <span class="mono">2027-01-31</span>.</span>
+                  </label>
+                  <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+                    <input type="checkbox" id="chgRevokeBobFalcon" onchange="runSimImpact()">
+                    <span><strong>Change 4:</strong> Revoke compartment <span class="mono">FALCON</span> from <strong>Bob</strong>.</span>
+                  </label>
+                  <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+                    <input type="checkbox" id="chgNtkDryRun" onchange="runSimImpact()">
+                    <span><strong>Change 5:</strong> Switch Need-to-Know (<span class="mono">P105-NTK</span>) from <span class="mono">enforce</span> to <span class="mono">dry_run</span>.</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="notice-box" style="margin:0;">
+                <div style="font-weight:700; margin-bottom:6px;">Submit Previewed Change to Two-Person Approvals Queue</div>
+                <div class="form-group" style="margin-bottom:8px;">
+                  <label for="simImpactReason">Written Reason for Change (mandatory, min 20 characters):</label>
+                  <textarea id="simImpactReason" oninput="updateSimSubmitState()" placeholder="Explain the operational requirement and ticket reference (min 20 chars)...">Assign Bob to CASE-7 inquiry and declassify CASE-7 to L2 per directive DIR-884.</textarea>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="mono" style="font-size:11px;" id="simImpactReasonCounter">79 / 20 min chars</span>
+                  <button type="button" class="btn btn-primary" id="simSubmitApprovalBtn" onclick="submitSimulatedChangeForApproval()">
+                    Submit for Two-Person Approval
+                  </button>
+                </div>
+                <div id="simSubmitFeedback" style="margin-top:8px; font-size:12px;"></div>
+              </div>
+            </div>
+
+            <div class="notice-box" id="simImpactSummaryBanner"></div>
+
+            <div class="table-wrap">
+              <table id="simImpactTable">
+                <thead>
+                  <tr>
+                    <th>Impact Type</th>
+                    <th>Subject</th>
+                    <th>Resource</th>
+                    <th>Action</th>
+                    <th>Before (Published v24)</th>
+                    <th>After (Candidate Preview)</th>
+                    <th>Rule / Path Explanation</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: APPROVALS -->
+      <section class="screen" id="screen-approvals" aria-labelledby="title-approvals">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-approvals">5. Two-Person Approvals Queue (Clark-Wilson Maker-Checker)</h1>
+            <p class="screen-subtitle">Rule P64/P65: The maker of a change cannot approve their own submission. Every item carries its bound simulation preview.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /x/v1/simulate</span>
+            <span class="api-pill">POST /access/v1/evaluation</span>
+          </div>
+        </div>
+
+        <div class="notice-box">
+          <strong>Tip:</strong> Use the <strong>Session Persona</strong> selector in the top header to switch between <strong>Alice (Maker)</strong> and <strong>Carol (Approver)</strong>. When logged in as Alice, any request authored by Alice displays <span class="mono">"You cannot approve your own change"</span> and its Approve button is disabled.
+        </div>
+
+        <div id="approvalsListContainer"></div>
+      </section>
+
+      <!-- SCREEN 6: BREAK-GLASS -->
+      <section class="screen" id="screen-breakglass" aria-labelledby="title-breakglass">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-breakglass">6. Emergency Break-Glass (Time-Boxed Need-to-Know)</h1>
+            <p class="screen-subtitle">4-hour emergency need-to-know grant with mandatory written reason, immediate CIO alert, and mandatory post-incident review.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /access/v1/evaluation</span>
+            <span class="api-pill">POST /x/v1/explain</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h2 class="card-title">
+              <span>Open 4-Hour Break-Glass Grant</span>
+              <span class="badge badge-warn">NEVER LIFTS P02 / P30 / P121</span>
+            </h2>
+            <p class="metric-sub" style="margin-bottom:10px;">
+              Invariant (REBAC-ANALYSIS.md §4): Break-glass only supplies a temporary <span class="mono">reason_to_know</span> (Step 4). It never overrides clearance (<span class="mono">P02</span>), compartments (<span class="mono">P30</span>), or the trusted network condition (<span class="mono">P121</span>).
+            </p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bgSubjectSelect">Subject Needing Emergency Access:</label>
+                <select id="bgSubjectSelect" onchange="updateBgPrecheck()">
+                  <option value="Dan">Dan (L3 Secret · [FALCON])</option>
+                  <option value="Alice">Alice (L3 Secret · [ORCHID, FALCON])</option>
+                  <option value="Carol" selected>Carol (L3 Secret · [])</option>
+                  <option value="Bob">Bob (L2 Confidential · [FALCON])</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="bgResourceSelect">Target Case File:</label>
+                <select id="bgResourceSelect" onchange="updateBgPrecheck()">
+                  <option value="CASE-15" selected>CASE-15 (L3 Secret · [] · open)</option>
+                  <option value="CASE-12">CASE-12 (L3 Secret · [FALCON] · open)</option>
+                  <option value="CASE-7">CASE-7 (L3 Secret · [ORCHID] · open)</option>
+                  <option value="CASE-14">CASE-14 (L2 Confidential · [] · open)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="notice-box" id="bgPrecheckBox"></div>
+
+            <div class="form-group" style="margin-bottom:10px;">
+              <label for="bgReasonInput">Mandatory Incident Reason (minimum 20 characters; sent immediately to Security Officer / CIO):</label>
+              <textarea id="bgReasonInput" oninput="updateBgFormState()" placeholder="Enter incident reference and justification (min 20 characters)..."></textarea>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <span class="mono" style="font-size:11px;" id="bgCharCounter">0 / 20 min chars · Duration: 04:00:00 fixed</span>
+              <button type="button" class="btn btn-danger" id="bgOpenBtn" disabled onclick="openBreakGlassGrant()">
+                Open 4-Hour Break-Glass Grant &amp; Notify CIO
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">
+              <span>Active Break-Glass Grants (Live 4-Hour Countdown)</span>
+              <span class="badge badge-warn" id="bgActiveCountBadge">1 ACTIVE</span>
+            </h2>
+            <div id="bgActiveContainer"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">
+            <span>Security Officer / CIO Break-Glass Review Queue</span>
+            <span class="badge">MANDATORY POST-INCIDENT REVIEW</span>
+          </h2>
+          <div class="table-wrap">
+            <table id="bgReviewTable">
+              <thead>
+                <tr>
+                  <th>Event ID</th>
+                  <th>Subject &amp; Resource</th>
+                  <th>Opened By</th>
+                  <th>Written Reason</th>
+                  <th>Window &amp; Countdown</th>
+                  <th>CIO Review Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: ACCESS REVIEWS -->
+      <section class="screen" id="screen-reviews" aria-labelledby="title-reviews">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-reviews">7. Access Reviews &amp; Expiring Grants</h1>
+            <p class="screen-subtitle">Periodic recertification campaigns for resource owners and security officers. Need-to-know grants expire in ≤ 90 days.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /access/v1/search/subject</span>
+            <span class="api-pill">POST /access/v1/search/resource</span>
+            <span class="api-pill">POST /x/v1/explain</span>
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="card">
+            <div class="metric-label">Active Campaign</div>
+            <div class="metric-value">2026-Q4</div>
+            <div class="metric-sub">Case Files &amp; Compartments Recertification</div>
+          </div>
+          <div class="card">
+            <div class="metric-label">Pending Items in Scope</div>
+            <div class="metric-value" id="reviewsPendingMetric">4 Items</div>
+            <div class="metric-sub">Out-of-scope cases omitted (no count)</div>
+          </div>
+          <div class="card">
+            <div class="metric-label">Expiring Within 45 Days</div>
+            <div class="metric-value">2 Grants</div>
+            <div class="metric-sub">Max grant lifetime: 90 days</div>
+          </div>
+          <div class="card">
+            <div class="metric-label">Revocation Latency</div>
+            <div class="metric-value">Immediate</div>
+            <div class="metric-sub">Re-decided on locked row (next request)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">
+            <span>Certification Queue (Certify or Revoke Tuple / Compartment)</span>
+            <span class="badge">LIVE AFFECTS SIMULATOR</span>
+          </h2>
+          <div class="table-wrap">
+            <table id="reviewsTable">
+              <thead>
+                <tr>
+                  <th>Review ID</th>
+                  <th>Subject</th>
+                  <th>Target Resource / Compartment</th>
+                  <th>Relation / Grant Type</th>
+                  <th>Current Expiry</th>
+                  <th>Status</th>
+                  <th>Decision Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 8: AUDIT EXPLORER -->
+      <section class="screen" id="screen-audit" aria-labelledby="title-audit">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-audit">8. Tamper-Evident Audit Explorer</h1>
+            <p class="screen-subtitle">Append-only SHA-256 hash chain (P73). Records rule IDs, policy version fingerprints and digests—never business content.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">POST /x/v1/explain</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="badge badge-allow" id="auditChainStatusBadge">CHAIN VERIFIED · SHA-256 INTEGRITY OK</span>
+              <span class="mono" style="font-size:12px;" id="auditHeadDigestText">Anchor: 2026-11-07T01:30:00Z · Head: d41e9a80…88b1</span>
+            </div>
+            <button type="button" class="btn" onclick="verifyAuditChain()">Verify Hash Chain Now</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="auditFilterSearch">Filter by Subject, Resource or Rule ID:</label>
+              <input type="text" id="auditFilterSearch" placeholder="e.g. Bob, CASE-7, P02, P121..." oninput="renderAuditTable()">
+            </div>
+            <div class="form-group">
+              <label for="auditFilterEffect">Effect:</label>
+              <select id="auditFilterEffect" onchange="renderAuditTable()">
+                <option value="ALL" selected>All Effects (ALLOW + DENY + ADMIN)</option>
+                <option value="DENY">DENY Only</option>
+                <option value="ALLOW">ALLOW Only</option>
+                <option value="ADMIN">ADMIN / APPROVAL / BREAK-GLASS</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="auditFilterRule">Rule ID:</label>
+              <select id="auditFilterRule" onchange="renderAuditTable()">
+                <option value="ALL" selected>All Rules</option>
+                <option value="P18-INACTIVE">P18-INACTIVE</option>
+                <option value="P02-BLP-READ">P02-BLP-READ</option>
+                <option value="P30-COMP">P30-COMP</option>
+                <option value="P121-NET">P121-NET</option>
+                <option value="P105-NTK">P105-NTK</option>
+                <option value="P65-TWO-PERSON">P65-TWO-PERSON</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2" style="align-items:start;">
+            <div class="table-wrap">
+              <table id="auditTable">
+                <thead>
+                  <tr>
+                    <th>Seq / Time (UTC)</th>
+                    <th>Subject → Resource</th>
+                    <th>Action</th>
+                    <th>Effect</th>
+                    <th>Rule IDs</th>
+                    <th>Policy Ver</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <div class="card" style="margin:0;" id="auditDetailPanel">
+              <h2 class="card-title">
+                <span>Decision &amp; Hash-Chain Detail</span>
+                <span class="badge badge-lock">0 BYTES CONTENT LOGGED</span>
+              </h2>
+              <div id="auditDetailContent"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 9: COMPLIANCE REPORTS -->
+      <section class="screen" id="screen-compliance" aria-labelledby="title-compliance">
+        <div class="screen-header">
+          <div>
+            <h1 class="screen-title" id="title-compliance">9. Compliance Control Mapping &amp; Evidence Export</h1>
+            <p class="screen-subtitle">Maps built-in invariants and audit hash-chain proofs to NIST SP 800-53, UAE IA Regulation v1.1 and ISO/IEC 27001.</p>
+          </div>
+          <div class="api-pill-group">
+            <span class="api-pill">GET /.well-known/authzen-configuration</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <h2 class="card-title" style="margin:0;">Control Mapping Matrix (ARCHITECTURE.md §12)</h2>
+            <button type="button" class="btn btn-primary" onclick="exportComplianceBundle()">Generate Signed Evidence Bundle (JSON)</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Framework &amp; Control</th>
+                  <th>Control Name</th>
+                  <th>Enforcing Rules &amp; Mechanisms in Qadamar</th>
+                  <th>Verification Evidence</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono"><strong>NIST SP 800-53 AC-3 / AC-24</strong></td>
+                  <td>Access Enforcement &amp; Access Control Decisions</td>
+                  <td>Two-tier signed evaluation (<span class="mono">P01..P126</span>), Postgres predicate pushdown + RLS backstop, fail-closed PDP.</td>
+                  <td>Policy bundle <span class="mono">v24</span> signed; 100% requests carry decision token.</td>
+                  <td><span class="badge badge-allow">ENFORCED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>NIST SP 800-53 AC-4 / AC-16</strong></td>
+                  <td>Information Flow &amp; Security Attributes</td>
+                  <td>Bell-LaPadula no-read-up (<span class="mono">P02</span>), effective level (<span class="mono">P40</span>), no-write-down (<span class="mono">P03</span>), compartments (<span class="mono">P30</span>), Biba integrity (<span class="mono">BIBA-NWU</span>).</td>
+                  <td>Locked in core; relations cannot lift Step 3 attributes.</td>
+                  <td><span class="badge badge-allow">ENFORCED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>NIST SP 800-53 AC-5</strong></td>
+                  <td>Separation of Duties</td>
+                  <td>Clark-Wilson two-person approval (<span class="mono">P65</span>), no self-grant (<span class="mono">P64</span>), admin content isolation (<span class="mono">P96</span>).</td>
+                  <td>Maker-checker verified on all approvals in chain.</td>
+                  <td><span class="badge badge-allow">ENFORCED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>NIST SP 800-53 AC-6</strong></td>
+                  <td>Least Privilege &amp; Need-to-Know</td>
+                  <td>Declared relation check (<span class="mono">P105-NTK</span>), ≤ 90-day grants, 4-hour break-glass with CIO review, trusted network cap (<span class="mono">P121</span>).</td>
+                  <td>Active recertification campaign <span class="mono">2026-Q4</span>.</td>
+                  <td><span class="badge badge-allow">ENFORCED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>NIST SP 800-53 AU-2 / AU-9 / AU-10</strong></td>
+                  <td>Audit Events, Protection &amp; Non-Repudiation</td>
+                  <td>Append-only SHA-256 hash chain (<span class="mono">P73</span>) with policy fingerprint and rule IDs; zero business content recorded.</td>
+                  <td>Chain verified through sequence <span class="mono">#1408</span>.</td>
+                  <td><span class="badge badge-allow">VERIFIED</span></td>
+                </tr>
+                <tr>
+                  <td class="mono"><strong>UAE IA Regulation v1.1 (T3 / T4)</strong></td>
+                  <td>Information Classification, Access Control &amp; Audit Logging</td>
+                  <td>Supports customer alignment for <span class="mono">L0–L3</span> classification, sovereign/air-gapped deployment, maker-checker and tamper-evident logs.</td>
+                  <td>Control mapping pack (customer-side attestation).</td>
+                  <td><span class="badge">MAPPED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" id="complianceExportCard" style="display:none;">
+          <h2 class="card-title">
+            <span>Generated Offline Evidence Bundle (Metadata &amp; Digests Only — Zero Business Content)</span>
+            <span class="badge badge-allow">SIGNED ED25519</span>
+          </h2>
+          <pre class="code-block" id="complianceExportPre"></pre>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script>
+    "use strict";
+
+    const TODAY_ISO = "2026-11-07";
+    const LEVEL_NAMES = {
+      0: "L0 Public",
+      1: "L1 Internal",
+      2: "L2 Confidential",
+      3: "L3 Secret"
+    };
+
+    // Mutable application state for the in-page toy domain
+    const appState = {
+      activeAdmin: "Alice",
+      ntkMode: "enforce",
+      policyVersion: "v24",
+      policyFingerprint: "sha256:9f8a7c12e4b01189a01d40b23c1e",
+      subjects: {
+        Alice: {
+          id: "Alice",
+          role: "case_lead",
+          status: "active",
+          clearance: 3,
+          compartments: ["ORCHID", "FALCON"],
+          trusted: true,
+          manager: "Eve"
+        },
+        Bob: {
+          id: "Bob",
+          role: "investigator",
+          status: "active",
+          clearance: 2,
+          compartments: ["FALCON"],
+          trusted: false,
+          manager: "Alice"
+        },
+        Carol: {
+          id: "Carol",
+          role: "investigator",
+          status: "active",
+          clearance: 3,
+          compartments: [],
+          trusted: false,
+          manager: "Alice"
+        },
+        Dan: {
+          id: "Dan",
+          role: "senior_investigator",
+          status: "active",
+          clearance: 3,
+          compartments: ["FALCON"],
+          trusted: true,
+          manager: "Eve"
+        },
+        Eve: {
+          id: "Eve",
+          role: "security_officer",
+          status: "active",
+          clearance: 3,
+          compartments: ["ORCHID"],
+          trusted: true,
+          manager: null
+        },
+        Frank: {
+          id: "Frank",
+          role: "contractor_analyst",
+          status: "inactive",
+          clearance: 1,
+          compartments: [],
+          trusted: false,
+          manager: "Bob"
+        },
+        "Assistant-1": {
+          id: "Assistant-1",
+          role: "investigator",
+          status: "active",
+          clearance: 2,
+          compartments: [],
+          trusted: false,
+          integrity: "derived",
+          manager: null
+        }
+      },
+      resources: {
+        "CASE-7": {
+          id: "CASE-7",
+          type: "CaseFile",
+          level: 3,
+          parentLevel: 2,
+          compartments: ["ORCHID"],
+          status: "open",
+          integrity: "verified",
+          hasFinancialAnnex: true
+        },
+        "CASE-11": {
+          id: "CASE-11",
+          type: "CaseFile",
+          level: 2,
+          parentLevel: 2,
+          compartments: ["FALCON"],
+          status: "open",
+          integrity: "system",
+          hasFinancialAnnex: true
+        },
+        "CASE-12": {
+          id: "CASE-12",
+          type: "CaseFile",
+          level: 3,
+          parentLevel: 3,
+          compartments: ["FALCON"],
+          status: "open",
+          integrity: "verified",
+          hasFinancialAnnex: false
+        },
+        "CASE-14": {
+          id: "CASE-14",
+          type: "CaseFile",
+          level: 2,
+          parentLevel: 1,
+          compartments: [],
+          status: "open",
+          integrity: "system",
+          hasFinancialAnnex: true
+        },
+        "CASE-15": {
+          id: "CASE-15",
+          type: "CaseFile",
+          level: 3,
+          parentLevel: 2,
+          compartments: [],
+          status: "open",
+          integrity: "verified",
+          hasFinancialAnnex: false
+        },
+        "CASE-18": {
+          id: "CASE-18",
+          type: "CaseFile",
+          level: 1,
+          parentLevel: 1,
+          compartments: [],
+          status: "closed",
+          integrity: "verified",
+          hasFinancialAnnex: false
+        }
+      },
+      relations: [
+        { id: "REL-1", kind: "team_member", subject: "Alice", resource: "CASE-7", detail: "team_member (case lead on CASE-7)" },
+        { id: "REL-2", kind: "allocated", subject: "Bob", resource: "CASE-7", validTo: "2026-12-31", detail: "allocated to CASE-7 until 2026-12-31" },
+        { id: "REL-3", kind: "team_member", subject: "Bob", resource: "CASE-11", detail: "team_member (investigator on CASE-11)" },
+        { id: "REL-4", kind: "team_member", subject: "Alice", resource: "CASE-12", detail: "team_member (case lead on CASE-12)" },
+        { id: "REL-5", kind: "allocated", subject: "Bob", resource: "CASE-14", validTo: "2026-12-31", detail: "allocated to CASE-14 until 2026-12-31" },
+        { id: "REL-6", kind: "approved_grant", subject: "Carol", resource: "CASE-14", validTo: "2026-12-15", detail: "approved grant on CASE-14 until 2026-12-15" },
+        { id: "REL-7", kind: "team_member", subject: "Dan", resource: "CASE-15", detail: "team_member (lead investigator on CASE-15)" },
+        { id: "REL-8", kind: "allocated", subject: "Carol", resource: "CASE-18", validTo: "2026-11-30", detail: "allocated to CASE-18 until 2026-11-30" },
+        { id: "REL-9", kind: "team_member", subject: "Bob", resource: "CASE-18", detail: "team_member (investigator on CASE-18)" },
+        { id: "REL-10", kind: "approved_grant", subject: "Eve", resource: "CASE-7", validTo: "2027-01-15", detail: "approved grant on CASE-7 until 2027-01-15" },
+        { id: "REL-11", kind: "delegated", subject: "Assistant-1", resource: "CASE-14", validTo: "2026-12-31", detail: "AI agent delegated by Bob on CASE-14 until 2026-12-31" }
+      ],
+      breakGlassGrants: [
+        {
+          id: "BG-09",
+          subject: "Dan",
+          resource: "CASE-12",
+          openedBy: "Alice",
+          reason: "Urgent cross-case forensic correlation requested by duty magistrate REF-991.",
+          remainingSeconds: 3 * 3600 + 14 * 60 + 22,
+          active: true,
+          cioReviewStatus: "PENDING CIO REVIEW"
+        },
+        {
+          id: "BG-08",
+          subject: "Alice",
+          resource: "CASE-15",
+          openedBy: "Alice",
+          reason: "Overnight custody handoff verification for magistrate warrant W-402.",
+          remainingSeconds: 0,
+          active: false,
+          cioReviewStatus: "PENDING CIO REVIEW"
+        }
+      ],
+      approvals: [
+        {
+          id: "REQ-205",
+          maker: "Alice",
+          createdAt: "2026-11-07 01:12 UTC",
+          summary: "Grant compartment ORCHID to Bob & declassify CASE-7 from L3 to L2",
+          reason: "Assign Bob to CASE-7 inquiry and declassify CASE-7 to L2 per directive DIR-884.",
+          digest: "sha256:7c41d902…e11a",
+          impactLines: [
+            "GAIN: Bob → CASE-7 (read): DENY [P02-BLP-READ, P30-COMP] → ALLOW [P01-RBAC, P02-BLP-READ, P30-COMP, P105-NTK] (allocated to CASE-7 until 2026-12-31)",
+            "GAIN: Bob → CASE-7 (write): DENY [P02-BLP-READ, P30-COMP] → ALLOW [P01-RBAC, P02-BLP-READ, P30-COMP, P105-NTK]"
+          ],
+          status: "PENDING",
+          checker: null,
+          effectFn: "applyReq205"
+        },
+        {
+          id: "REQ-204",
+          maker: "Carol",
+          createdAt: "2026-11-07 00:45 UTC",
+          summary: "Add Need-to-Know grant on CASE-15 (L3) for Carol until 2027-01-31",
+          reason: "Carol assigned to assist Dan on CASE-15 evidentiary review under ticket INC-772.",
+          digest: "sha256:3a09f811…b420",
+          impactLines: [
+            "GAIN: Carol → CASE-15 (read): DENY [P105-NTK] → ALLOW [P01-RBAC, P02-BLP-READ, P105-NTK, CEDAR-01-READ-CASE] (approved grant on CASE-15 until 2027-01-31)",
+            "GAIN: Carol → CASE-15 (write): DENY [P105-NTK] → ALLOW [P01-RBAC, P02-BLP-READ, P105-NTK] (approved grant on CASE-15 until 2027-01-31)"
+          ],
+          status: "PENDING",
+          checker: null,
+          effectFn: "applyReq204"
+        }
+      ],
+      reviews: [
+        {
+          id: "REV-41",
+          subject: "Carol",
+          target: "CASE-14",
+          kind: "approved_grant",
+          expiry: "2026-12-15 (38d)",
+          status: "PENDING",
+          relationId: "REL-6"
+        },
+        {
+          id: "REV-42",
+          subject: "Bob",
+          target: "CASE-14",
+          kind: "allocated",
+          expiry: "2026-12-31 (54d)",
+          status: "PENDING",
+          relationId: "REL-5"
+        },
+        {
+          id: "REV-43",
+          subject: "Eve",
+          target: "CASE-7",
+          kind: "approved_grant",
+          expiry: "2027-01-15 (69d)",
+          status: "PENDING",
+          relationId: "REL-10"
+        },
+        {
+          id: "REV-44",
+          subject: "Bob",
+          target: "Compartment: FALCON",
+          kind: "compartment_assignment",
+          expiry: "2026-11-20 (13d)",
+          status: "PENDING",
+          compartment: "FALCON"
+        }
+      ],
+      auditEvents: [
+        {
+          seq: 1408,
+          time: "2026-11-07 01:34:19Z",
+          subject: "Bob",
+          resource: "CASE-7",
+          action: "read",
+          effect: "DENY",
+          rules: ["P02-BLP-READ", "P30-COMP"],
+          relationPath: "allocated to CASE-7 until 2026-12-31 (Step 4 not reached: Step 3 denied)",
+          obligations: [],
+          policyVer: "v24 (sha256:9f8a…3c1e)",
+          prevHash: "a82f1190c44e9b1d7012",
+          rowHash: "d41e9a803b771c0988b1"
+        },
+        {
+          seq: 1407,
+          time: "2026-11-07 01:31:04Z",
+          subject: "Alice",
+          resource: "CASE-7",
+          action: "read",
+          effect: "ALLOW",
+          rules: ["P01-RBAC", "P02-BLP-READ", "P30-COMP", "P105-NTK", "CEDAR-01-READ-CASE"],
+          relationPath: "team_member (case lead on CASE-7)",
+          obligations: [],
+          policyVer: "v24 (sha256:9f8a…3c1e)",
+          prevHash: "7f01c338b9104d2ea551",
+          rowHash: "a82f1190c44e9b1d7012"
+        },
+        {
+          seq: 1406,
+          time: "2026-11-07 01:28:50Z",
+          subject: "Alice",
+          resource: "CASE-12",
+          action: "read (untrusted net)",
+          effect: "DENY",
+          rules: ["P121-NET", "P02-BLP-READ", "P30-COMP"],
+          relationPath: "team_member (case lead on CASE-12) — blocked by P121 untrusted network cap (L2, ∅)",
+          obligations: [],
+          policyVer: "v24 (sha256:9f8a…3c1e)",
+          prevHash: "5c99e12044ab7812f009",
+          rowHash: "7f01c338b9104d2ea551"
+        },
+        {
+          seq: 1405,
+          time: "2026-11-07 01:22:11Z",
+          subject: "Bob",
+          resource: "CASE-14",
+          action: "read",
+          effect: "ALLOW",
+          rules: ["P01-RBAC", "P02-BLP-READ", "P105-NTK", "CEDAR-01-READ-CASE", "ABAC-CONTENT-FIN-ANNEX"],
+          relationPath: "allocated to CASE-14 until 2026-12-31",
+          obligations: ["mask_segment:financial_annex"],
+          policyVer: "v24 (sha256:9f8a…3c1e)",
+          prevHash: "19b4d008e2319a44c310",
+          rowHash: "5c99e12044ab7812f009"
+        },
+        {
+          seq: 1404,
+          time: "2026-11-07 01:15:00Z",
+          subject: "Frank",
+          resource: "CASE-18",
+          action: "read",
+          effect: "DENY",
+          rules: ["P18-INACTIVE"],
+          relationPath: "none (subject status is inactive; denied at Step 1)",
+          obligations: [],
+          policyVer: "v24 (sha256:9f8a…3c1e)",
+          prevHash: "04e77a1299c03b88d102",
+          rowHash: "19b4d008e2319a44c310"
+        },
+        {
+          seq: 1403,
+          time: "2026-11-07 00:48:22Z",
+          subject: "Alice (Admin)",
+          resource: "BG-09 (Dan → CASE-12)",
+          action: "open_break_glass",
+          effect: "ADMIN",
+          rules: ["P105-NTK", "P73-AUDIT"],
+          relationPath: "4h emergency need-to-know grant opened; CIO notified",
+          obligations: ["cio_review_required"],
+          policyVer: "v24 (sha256:9f8a…3c1e)",
+          prevHash: "91d004f823a11c67e540",
+          rowHash: "04e77a1299c03b88d102"
+        }
+      ],
+      selectedAuditSeq: 1408
+    };
+
+    function cloneStateForSimulation(baseState) {
+      return JSON.parse(JSON.stringify(baseState));
+    }
+
+    function formatSeconds(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+      const ss = String(s % 60).padStart(2, "0");
+      return hh + ":" + mm + ":" + ss;
+    }
+
+    // Resolve Reason-to-Know (Step 4) for (subjectId, resourceId)
+    function resolveNeedToKnow(state, subjectId, resourceId) {
+      const matches = [];
+
+      // 1. Direct declared relations (team_member, allocated, approved_grant)
+      for (const rel of state.relations) {
+        if (rel.subject === subjectId && rel.resource === resourceId) {
+          if (rel.validTo && rel.validTo < TODAY_ISO) {
+            continue;
+          }
+          matches.push(rel.detail);
+        }
+      }
+
+      // 2. Transitive reporting line (subjectId is somewhere above a person who holds a live relation on the resource)
+      for (const subKey of Object.keys(state.subjects)) {
+        if (subKey === subjectId) continue;
+        const subHasDirect = state.relations.some(
+          (r) => r.subject === subKey && r.resource === resourceId && (!r.validTo || r.validTo >= TODAY_ISO)
+        );
+        if (!subHasDirect) continue;
+        // Walk up the manager chain, cycle-safe and capped at 20 levels.
+        const seen = new Set([subKey]);
+        let up = state.subjects[subKey].manager;
+        for (let depth = 0; up && depth < 20 && !seen.has(up); depth++) {
+          if (up === subjectId) {
+            matches.push("reports_to (" + subKey + " reports to " + subjectId + (depth ? ", " + (depth + 1) + " levels" : "") + " on " + resourceId + ")");
+            break;
+          }
+          seen.add(up);
+          up = state.subjects[up] ? state.subjects[up].manager : null;
+        }
+      }
+
+      // 3. Active break-glass grant (4 hours)
+      for (const bg of state.breakGlassGrants) {
+        if (bg.active && bg.remainingSeconds > 0 && bg.subject === subjectId && bg.resource === resourceId) {
+          matches.push("break-glass " + bg.id + " active (" + formatSeconds(bg.remainingSeconds) + " left)");
+        }
+      }
+
+      return matches;
+    }
+
+    // Core deterministic decision procedure (ARCHITECTURE.md §3.2)
+    function evaluateDecision(state, subjectId, resourceId, action, network) {
+      const subject = state.subjects[subjectId];
+      const resource = state.resources[resourceId];
+      const denyRules = [];
+      const allowRules = [];
+      const denyReasons = [];
+      const obligations = [];
+
+      // Step 1: Inactive subject -> deny first
+      if (!subject || subject.status !== "active") {
+        return {
+          effect: "DENY",
+          rules: ["P18-INACTIVE"],
+          reason: "Subject status is inactive (Step 1 immediate deny)",
+          obligations: []
+        };
+      }
+
+      // Step 2: Role eligibility (RBAC matrix)
+      const roleCanWrite = ["case_lead", "investigator", "senior_investigator"].includes(subject.role);
+      const roleCanRead = roleCanWrite || subject.role === "security_officer";
+      if (action === "read" && !roleCanRead) {
+        denyRules.push("P01-RBAC");
+        denyReasons.push("Role " + subject.role + " is not eligible for read");
+      } else if (action === "write" && !roleCanWrite) {
+        denyRules.push("P01-RBAC");
+        denyReasons.push("Role " + subject.role + " is not eligible for write on CaseFile");
+      } else {
+        allowRules.push("P01-RBAC");
+      }
+
+      // Step 3: Mandatory checks (BLP effective level, compartments, network cap, Biba)
+      const effectiveLevel = Math.max(resource.level, resource.parentLevel || 0);
+      const isUntrustedNet = network === "untrusted";
+      const effectiveClearance = isUntrustedNet ? Math.min(subject.clearance, 2) : subject.clearance;
+      const effectiveCompartments = isUntrustedNet ? [] : subject.compartments.slice();
+
+      // BLP No Read Up (P02 / P40)
+      if (effectiveClearance < effectiveLevel) {
+        if (isUntrustedNet && subject.clearance >= effectiveLevel) {
+          denyRules.push("P121-NET");
+          denyRules.push("P02-BLP-READ");
+          denyReasons.push(
+            "Network untrusted caps clearance at L2; resource effective level is " + LEVEL_NAMES[effectiveLevel]
+          );
+        } else {
+          denyRules.push("P02-BLP-READ");
+          denyReasons.push(
+            "Insufficient clearance (" +
+              LEVEL_NAMES[subject.clearance] +
+              " < " +
+              LEVEL_NAMES[effectiveLevel] +
+              ")"
+          );
+        }
+      } else {
+        allowRules.push("P02-BLP-READ");
+      }
+
+      // BLP No Write Down (P03) + Biba Integrity (BIBA-NWU) on write
+      if (action === "write") {
+        if (effectiveClearance > effectiveLevel && !subject.trusted) {
+          denyRules.push("P03-BLP-WRITE");
+          denyReasons.push("No write down from higher clearance without trusted flag");
+        }
+        // Biba: a writer of lower integrity never writes up (people are "verified", an AI agent is "derived").
+        const INTEGRITY_RANK = { derived: 0, extracted: 1, system: 2, verified: 3 };
+        const writerIntegrity = subject.integrity || "verified";
+        if (INTEGRITY_RANK[writerIntegrity] < INTEGRITY_RANK[resource.integrity]) {
+          denyRules.push("BIBA-NWU");
+          denyReasons.push("Biba no write up: writer integrity '" + writerIntegrity + "' is below the record's '" + resource.integrity + "'");
+        }
+      }
+
+      // Compartments check (P30)
+      const missingComps = resource.compartments.filter((c) => !effectiveCompartments.includes(c));
+      if (missingComps.length > 0) {
+        if (isUntrustedNet && resource.compartments.every((c) => subject.compartments.includes(c))) {
+          if (!denyRules.includes("P121-NET")) denyRules.push("P121-NET");
+          denyRules.push("P30-COMP");
+          denyReasons.push(
+            "Compartment(s) [" + missingComps.join(", ") + "] cleared on untrusted network (P121)"
+          );
+        } else {
+          denyRules.push("P30-COMP");
+          denyReasons.push("Missing required compartment(s): [" + missingComps.join(", ") + "]");
+        }
+      } else if (resource.compartments.length > 0) {
+        allowRules.push("P30-COMP");
+      }
+
+      // Step 4: Relation-based Need-to-Know (P105-NTK)
+      const ntkPaths = resolveNeedToKnow(state, subjectId, resourceId);
+      if (ntkPaths.length === 0) {
+        if (state.ntkMode === "enforce") {
+          denyRules.push("P105-NTK");
+          denyReasons.push("No declared reason-to-know relation for " + resourceId);
+        } else if (state.ntkMode === "dry_run") {
+          allowRules.push("P105-NTK(DRY-RUN)");
+          obligations.push("audit:would_deny_p105");
+        }
+      } else {
+        allowRules.push("P105-NTK");
+      }
+
+      // Step 5: Tenant Cedar ABAC policies
+      if (action === "write" && resource.status === "closed") {
+        denyRules.push("CEDAR-02-WRITE-ACTIVE-ONLY");
+        denyReasons.push("Cedar forbid: resource status is 'closed'");
+      } else if (action === "read") {
+        allowRules.push("CEDAR-01-READ-CASE");
+      }
+
+      // Step 6: ABAC content-attribute obligations
+      if (action === "read" && resource.hasFinancialAnnex && subject.role !== "case_lead") {
+        allowRules.push("ABAC-CONTENT-FIN-ANNEX");
+        obligations.push("mask_segment:financial_annex");
+      }
+
+      // Step 7: Combine — any deny wins
+      if (denyRules.length > 0) {
+        const noteNtk =
+          ntkPaths.length > 0 && (denyRules.includes("P02-BLP-READ") || denyRules.includes("P30-COMP") || denyRules.includes("P121-NET"))
+            ? " (holds relation: " + ntkPaths[0] + ", but relation never lifts Step 3)"
+            : "";
+        return {
+          effect: "DENY",
+          rules: denyRules,
+          reason: denyReasons.join("; ") + noteNtk,
+          obligations: []
+        };
+      }
+
+      const pathText =
+        ntkPaths.length > 0
+          ? ntkPaths.join(" + ")
+          : "P105 in dry_run mode (would-deny logged; no relation held)";
+
+      return {
+        effect: "ALLOW",
+        rules: allowRules,
+        reason: pathText,
+        obligations: obligations
+      };
+    }
+
+    // Navigation & Responsive Sidebar
+    function switchScreen(screenId) {
+      document.querySelectorAll(".screen").forEach((el) => {
+        el.classList.toggle("active", el.id === screenId);
+      });
+      document.querySelectorAll(".nav-btn").forEach((btn) => {
+        if (btn.getAttribute("data-screen") === screenId) {
+          btn.setAttribute("aria-current", "page");
+        } else {
+          btn.removeAttribute("aria-current");
+        }
+      });
+      const sidebar = document.getElementById("appSidebar");
+      const toggleBtn = document.getElementById("sidebarToggleBtn");
+      if (sidebar.classList.contains("open")) {
+        sidebar.classList.remove("open");
+        toggleBtn.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    document.querySelectorAll(".nav-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        switchScreen(btn.getAttribute("data-screen"));
+      });
+    });
+
+    document.getElementById("sidebarToggleBtn").addEventListener("click", () => {
+      const sidebar = document.getElementById("appSidebar");
+      const isOpen = sidebar.classList.toggle("open");
+      document.getElementById("sidebarToggleBtn").setAttribute("aria-expanded", String(isOpen));
+    });
+
+    // Theme & Session Persona Switchers
+    document.getElementById("themeSelect").addEventListener("change", (e) => {
+      const val = e.target.value;
+      if (val === "system") {
+        document.documentElement.removeAttribute("data-theme");
+      } else {
+        document.documentElement.setAttribute("data-theme", val);
+      }
+    });
+
+    document.getElementById("activeAdminSelect").addEventListener("change", (e) => {
+      appState.activeAdmin = e.target.value;
+      const roleMap = {
+        Alice: "Alice (Access Admin / Maker)",
+        Carol: "Carol (Approver / Second Person)",
+        Eve: "Eve (Security Officer / CIO)",
+        Frank: "Frank (Auditor — Read-Only)"
+      };
+      document.getElementById("activePersonaBanner").textContent = "Logged in: " + roleMap[appState.activeAdmin];
+      renderApprovals();
+      renderBreakGlass();
+      renderReviews();
+    });
+
+    // Render Attribute Model Subjects Table
+    function renderModelSubjects() {
+      const tbody = document.querySelector("#modelSubjectsTable tbody");
+      tbody.innerHTML = "";
+      for (const subId of Object.keys(appState.subjects)) {
+        const s = appState.subjects[subId];
+        const tr = document.createElement("tr");
+        const statusBadge =
+          s.status === "active"
+            ? '<span class="badge badge-allow">active</span>'
+            : '<span class="badge badge-deny">inactive</span>';
+        const comps = s.compartments.length
+          ? s.compartments.map((c) => '<span class="badge">' + c + "</span>").join(" ")
+          : '<span class="metric-sub">∅ (none)</span>';
+        tr.innerHTML =
+          '<td class="mono"><strong>' + s.id + "</strong></td>" +
+          '<td class="mono">' + s.role + "</td>" +
+          "<td>" + statusBadge + "</td>" +
+          '<td class="mono">' + LEVEL_NAMES[s.clearance] + "</td>" +
+          "<td>" + comps + "</td>" +
+          '<td class="mono">' + (s.trusted ? "true" : "false") + "</td>" +
+          '<td class="mono">' + (s.manager || "—") + "</td>";
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Simulator Tabs
+    function selectSimTab(mode) {
+      document.getElementById("simPaneWhat").style.display = mode === "mode-what" ? "block" : "none";
+      document.getElementById("simPaneWho").style.display = mode === "mode-who" ? "block" : "none";
+      document.getElementById("simPaneImpact").style.display = mode === "mode-impact" ? "block" : "none";
+
+      document.getElementById("tabBtnWhat").setAttribute("aria-selected", String(mode === "mode-what"));
+      document.getElementById("tabBtnWho").setAttribute("aria-selected", String(mode === "mode-who"));
+      document.getElementById("tabBtnImpact").setAttribute("aria-selected", String(mode === "mode-impact"));
+
+      if (mode === "mode-what") runSimWhat();
+      if (mode === "mode-who") runSimWho();
+      if (mode === "mode-impact") runSimImpact();
+    }
+
+    // Mode A: What can X see?
+    function runSimWhat() {
+      const subjectId = document.getElementById("simWhatSubject").value;
+      const action = document.getElementById("simWhatAction").value;
+      const network = document.getElementById("simWhatNetwork").value;
+      const sub = appState.subjects[subjectId];
+
+      const effClearance = network === "untrusted" ? Math.min(sub.clearance, 2) : sub.clearance;
+      const effComps = network === "untrusted" ? [] : sub.compartments;
+
+      document.getElementById("simWhatSubjectSummary").innerHTML =
+        "<strong>Subject Profile:</strong> <span class='mono'>" +
+        sub.id +
+        "</span> · Role: <span class='mono'>" +
+        sub.role +
+        "</span> · Status: <span class='mono'>" +
+        sub.status +
+        "</span> · Base Clearance: <span class='mono'>" +
+        LEVEL_NAMES[sub.clearance] +
+        "</span> · Effective on <strong>" +
+        network +
+        "</strong> network: <span class='mono'>" +
+        LEVEL_NAMES[effClearance] +
+        "</span>, Compartments: <span class='mono'>[" +
+        (effComps.join(", ") || "∅") +
+        "]</span>.";
+
+      const tbody = document.querySelector("#simWhatTable tbody");
+      tbody.innerHTML = "";
+
+      for (const resId of Object.keys(appState.resources)) {
+        const r = appState.resources[resId];
+        const dec = evaluateDecision(appState, subjectId, resId, action, network);
+        const tr = document.createElement("tr");
+        const effectBadge =
+          dec.effect === "ALLOW"
+            ? '<span class="badge badge-allow">ALLOW</span>'
+            : '<span class="badge badge-deny">DENY</span>';
+        const compBadges = r.compartments.length
+          ? r.compartments.map((c) => '<span class="badge">' + c + "</span>").join(" ")
+          : '<span class="metric-sub">[]</span>';
+        const rulesHtml = dec.rules.map((rl) => '<span class="badge">' + rl + "</span>").join(" ");
+        const obHtml = dec.obligations.length
+          ? dec.obligations.map((o) => '<span class="badge badge-warn">' + o + "</span>").join(" ")
+          : '<span class="metric-sub">none</span>';
+
+        tr.innerHTML =
+          '<td class="mono"><strong>' + r.id + "</strong></td>" +
+          '<td class="mono">' + LEVEL_NAMES[r.level] + " " + compBadges + "</td>" +
+          '<td class="mono">' + r.status + " · " + r.integrity + "</td>" +
+          "<td>" + effectBadge + "</td>" +
+          "<td>" + rulesHtml + "</td>" +
+          "<td>" + dec.reason + "</td>" +
+          "<td>" + obHtml + "</td>";
+        tbody.appendChild(tr);
+      }
+
+      // Generate SQL residual predicate preview (POST /x/v1/filter)
+      const sqlBox = document.getElementById("simWhatSqlBox");
+      if (sub.status !== "active") {
+        sqlBox.textContent = "-- Subject is inactive (P18-INACTIVE)\nWHERE FALSE;";
+      } else {
+        const compArrayLiteral = effComps.length ? "ARRAY['" + effComps.join("','") + "']" : "ARRAY[]::text[]";
+        sqlBox.textContent =
+          "-- Residual compiled by POST /x/v1/filter for subject=" +
+          sub.id +
+          ", action=" +
+          action +
+          ", network=" +
+          network +
+          " (policy " +
+          appState.policyVersion +
+          ")\n" +
+          "WHERE GREATEST(r.level, r.parent_level) <= " +
+          effClearance +
+          " -- P02 / P40 / P121\n" +
+          "  AND r.compartments <@ " +
+          compArrayLiteral +
+          " -- P30 / P121\n" +
+          (appState.ntkMode === "enforce"
+            ? "  AND (\n" +
+              "    EXISTS (SELECT 1 FROM case_team ct WHERE ct.case_id = r.id AND ct.person_id = '" +
+              sub.id +
+              "')\n" +
+              "    OR EXISTS (SELECT 1 FROM allocations a WHERE a.case_id = r.id AND a.person_id = '" +
+              sub.id +
+              "' AND a.to_date >= DATE '" +
+              TODAY_ISO +
+              "')\n" +
+              "    OR EXISTS (SELECT 1 FROM reporting_line rl JOIN case_team ct ON ct.person_id = rl.subordinate_id WHERE rl.manager_id = '" +
+              sub.id +
+              "' AND ct.case_id = r.id)\n" +
+              "    OR EXISTS (SELECT 1 FROM ntk_grants g WHERE g.object_id = r.id AND g.subject_id = '" +
+              sub.id +
+              "' AND g.valid_to >= NOW())\n" +
+              "  ) -- P105-NTK\n"
+            : "  -- P105-NTK in dry_run mode (would-deny evaluated in 2nd tier)\n") +
+          (action === "write" ? "  AND r.status <> 'closed'; -- CEDAR-02" : "  AND r.status <> 'archived_sealed'; -- CEDAR-01");
+      }
+    }
+
+    // Mode B: Who can see Y?
+    function runSimWho() {
+      const resourceId = document.getElementById("simWhoResource").value;
+      const action = document.getElementById("simWhoAction").value;
+      const network = document.getElementById("simWhoNetwork").value;
+      const r = appState.resources[resourceId];
+
+      document.getElementById("simWhoResourceSummary").innerHTML =
+        "<strong>Resource Metadata:</strong> <span class='mono'>" +
+        r.id +
+        "</span> · Classification: <span class='mono'>" +
+        LEVEL_NAMES[r.level] +
+        "</span> · Compartments: <span class='mono'>[" +
+        (r.compartments.join(", ") || "∅") +
+        "]</span> · Status: <span class='mono'>" +
+        r.status +
+        "</span> · Biba Integrity: <span class='mono'>" +
+        r.integrity +
+        "</span>.";
+
+      const tbody = document.querySelector("#simWhoTable tbody");
+      tbody.innerHTML = "";
+
+      for (const subId of Object.keys(appState.subjects)) {
+        const s = appState.subjects[subId];
+        const dec = evaluateDecision(appState, subId, resourceId, action, network);
+        const effClearance = network === "untrusted" ? Math.min(s.clearance, 2) : s.clearance;
+        const effComps = network === "untrusted" ? [] : s.compartments;
+
+        const tr = document.createElement("tr");
+        const effectBadge =
+          dec.effect === "ALLOW"
+            ? '<span class="badge badge-allow">ALLOW</span>'
+            : '<span class="badge badge-deny">DENY</span>';
+        const rulesHtml = dec.rules.map((rl) => '<span class="badge">' + rl + "</span>").join(" ");
+
+        tr.innerHTML =
+          '<td class="mono"><strong>' + s.id + "</strong></td>" +
+          '<td class="mono">' + s.role + " (" + s.status + ")</td>" +
+          '<td class="mono">' + LEVEL_NAMES[effClearance] + " · [" + (effComps.join(", ") || "∅") + "]</td>" +
+          "<td>" + effectBadge + "</td>" +
+          "<td>" + rulesHtml + "</td>" +
+          "<td>" + dec.reason + "</td>";
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Build candidate state for Mode C (Impact of a change before apply)
+    function buildCandidateState() {
+      const cand = cloneStateForSimulation(appState);
+      const c1 = document.getElementById("chgGrantOrchidBob").checked;
+      const c2 = document.getElementById("chgLowerCase7").checked;
+      const c3 = document.getElementById("chgGrantCarolCase15").checked;
+      const c4 = document.getElementById("chgRevokeBobFalcon").checked;
+      const c5 = document.getElementById("chgNtkDryRun").checked;
+
+      if (c1 && !cand.subjects.Bob.compartments.includes("ORCHID")) {
+        cand.subjects.Bob.compartments.push("ORCHID");
+      }
+      if (c2) {
+        cand.resources["CASE-7"].level = 2;
+      }
+      if (c3) {
+        cand.relations.push({
+          id: "REL-SIM-CAROL-15",
+          kind: "approved_grant",
+          subject: "Carol",
+          resource: "CASE-15",
+          validTo: "2027-01-31",
+          detail: "approved grant on CASE-15 until 2027-01-31"
+        });
+      }
+      if (c4) {
+        cand.subjects.Bob.compartments = cand.subjects.Bob.compartments.filter((c) => c !== "FALCON");
+      }
+      if (c5) {
+        cand.ntkMode = "dry_run";
+      }
+      return cand;
+    }
+
+    let latestImpactDiffs = [];
+
+    function runSimImpact() {
+      const candState = buildCandidateState();
+      const tbody = document.querySelector("#simImpactTable tbody");
+      tbody.innerHTML = "";
+      latestImpactDiffs = [];
+
+      let gainsCount = 0;
+      let lossesCount = 0;
+
+      for (const subId of Object.keys(appState.subjects)) {
+        for (const resId of Object.keys(appState.resources)) {
+          for (const action of ["read", "write"]) {
+            const beforeDec = evaluateDecision(appState, subId, resId, action, "trusted");
+            const afterDec = evaluateDecision(candState, subId, resId, action, "trusted");
+
+            const effectChanged = beforeDec.effect !== afterDec.effect;
+            const rulesChanged = beforeDec.rules.join(",") !== afterDec.rules.join(",");
+
+            if (effectChanged || (subId === "Bob" && resId === "CASE-7" && action === "read" && rulesChanged)) {
+              let deltaKind = "UNCHANGED (STILL DENIED)";
+              let badgeHtml = '<span class="badge badge-warn">STILL DENIED (RULE SHIFT)</span>';
+              if (beforeDec.effect === "DENY" && afterDec.effect === "ALLOW") {
+                deltaKind = "GAIN";
+                gainsCount++;
+                badgeHtml = '<span class="badge badge-allow">+ GAIN ACCESS</span>';
+              } else if (beforeDec.effect === "ALLOW" && afterDec.effect === "DENY") {
+                deltaKind = "LOSS";
+                lossesCount++;
+                badgeHtml = '<span class="badge badge-deny">- LOSE ACCESS</span>';
+              }
+
+              latestImpactDiffs.push({
+                deltaKind,
+                subId,
+                resId,
+                action,
+                beforeDec,
+                afterDec
+              });
+
+              const tr = document.createElement("tr");
+              tr.innerHTML =
+                "<td>" + badgeHtml + "</td>" +
+                '<td class="mono"><strong>' + subId + "</strong></td>" +
+                '<td class="mono"><strong>' + resId + "</strong></td>" +
+                '<td class="mono">' + action + "</td>" +
+                '<td class="mono">' + beforeDec.effect + " [" + beforeDec.rules.join(", ") + "]</td>" +
+                '<td class="mono">' + afterDec.effect + " [" + afterDec.rules.join(", ") + "]</td>" +
+                "<td>" + afterDec.reason + "</td>";
+              tbody.appendChild(tr);
+            }
+          }
+        }
+      }
+
+      if (latestImpactDiffs.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td colspan="7" class="metric-sub">No permission changes detected. Select at least one candidate modification above.</td>';
+        tbody.appendChild(tr);
+      }
+
+      document.getElementById("simImpactSummaryBanner").innerHTML =
+        "<strong>Simulation Result (<span class='mono'>POST /x/v1/simulate</span>):</strong> " +
+        "<span class='badge badge-allow'>" +
+        gainsCount +
+        " Gained</span> " +
+        "<span class='badge badge-deny'>" +
+        lossesCount +
+        " Lost</span> across " + (Object.keys(appState.subjects).length * Object.keys(appState.resources).length * 2) + " evaluated <span class='mono'>(subject, case_file, action)</span> pairs. Preview digest: <span class='mono'>sha256:8e41b02c…91f4</span>.";
+
+      updateSimSubmitState();
+    }
+
+    function updateSimSubmitState() {
+      const reason = document.getElementById("simImpactReason").value.trim();
+      const counter = document.getElementById("simImpactReasonCounter");
+      counter.textContent = reason.length + " / 20 min chars";
+      const btn = document.getElementById("simSubmitApprovalBtn");
+      const isAuditor = appState.activeAdmin === "Frank";
+      btn.disabled = reason.length < 20 || latestImpactDiffs.length === 0 || isAuditor;
+    }
+
+    function submitSimulatedChangeForApproval() {
+      const reason = document.getElementById("simImpactReason").value.trim();
+      if (reason.length < 20 || latestImpactDiffs.length === 0) return;
+
+      const selectedLabels = [];
+      if (document.getElementById("chgGrantOrchidBob").checked) selectedLabels.push("Grant ORCHID to Bob");
+      if (document.getElementById("chgLowerCase7").checked) selectedLabels.push("Declassify CASE-7 (L3→L2)");
+      if (document.getElementById("chgGrantCarolCase15").checked) selectedLabels.push("Grant NTK on CASE-15 to Carol");
+      if (document.getElementById("chgRevokeBobFalcon").checked) selectedLabels.push("Revoke FALCON from Bob");
+      if (document.getElementById("chgNtkDryRun").checked) selectedLabels.push("Set P105-NTK to dry_run");
+
+      const newId = "REQ-" + (206 + appState.approvals.length);
+      const impactLines = latestImpactDiffs.slice(0, 4).map((d) => {
+        return (
+          d.deltaKind +
+          ": " +
+          d.subId +
+          " → " +
+          d.resId +
+          " (" +
+          d.action +
+          "): " +
+          d.beforeDec.effect +
+          " [" +
+          d.beforeDec.rules.join(", ") +
+          "] → " +
+          d.afterDec.effect +
+          " [" +
+          d.afterDec.rules.join(", ") +
+          "] (" +
+          d.afterDec.reason +
+          ")"
+        );
+      });
+
+      appState.approvals.unshift({
+        id: newId,
+        maker: appState.activeAdmin,
+        createdAt: "2026-11-07 01:39 UTC",
+        summary: selectedLabels.join(" + "),
+        reason: reason,
+        digest: "sha256:8e41b02c…91f4",
+        impactLines: impactLines,
+        status: "PENDING",
+        checker: null,
+        effectFn: "custom"
+      });
+
+      appendAuditRow(
+        appState.activeAdmin + " (Maker)",
+        newId,
+        "submit_approval",
+        "ADMIN",
+        ["P65-TWO-PERSON", "P73-AUDIT"],
+        "Submitted change with simulation preview digest sha256:8e41b02c…91f4"
+      );
+
+      renderApprovals();
+      document.getElementById("simSubmitFeedback").innerHTML =
+        '<span class="badge badge-allow">SUBMITTED</span> Added <strong>' +
+        newId +
+        '</strong> to the Approvals queue. Because you (' +
+        appState.activeAdmin +
+        ') are the maker, a second person must approve it.';
+    }
+
+    // Screen 5: Render Approvals Queue
+    function renderApprovals() {
+      const container = document.getElementById("approvalsListContainer");
+      container.innerHTML = "";
+      const pendingCount = appState.approvals.filter((a) => a.status === "PENDING").length;
+      document.getElementById("navApprovalsCount").textContent = String(pendingCount);
+      document.getElementById("overviewApprovalsMetric").textContent = pendingCount + " Pending";
+
+      const isAuditor = appState.activeAdmin === "Frank";
+
+      for (const item of appState.approvals) {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const isSelf = item.maker === appState.activeAdmin;
+        let statusBadge = '<span class="badge badge-warn">PENDING SECOND PERSON</span>';
+        if (item.status === "APPROVED") {
+          statusBadge = '<span class="badge badge-allow">APPROVED BY ' + item.checker + "</span>";
+        } else if (item.status === "REJECTED") {
+          statusBadge = '<span class="badge badge-deny">REJECTED BY ' + item.checker + "</span>";
+        }
+
+        const impactHtml = item.impactLines
+          .map((line) => '<div class="mono" style="font-size:12px; margin-bottom:3px;">• ' + line + "</div>")
+          .join("");
+
+        let actionArea = "";
+        if (item.status === "PENDING") {
+          if (isSelf) {
+            actionArea =
+              '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">' +
+              '<span class="badge badge-deny">P64 / P65: You cannot approve your own change (maker == ' +
+              item.maker +
+              ")</span>" +
+              '<button type="button" class="btn btn-primary" disabled>Approve &amp; Apply Change</button>' +
+              "</div>";
+          } else if (isAuditor) {
+            actionArea =
+              '<div style="margin-top:10px;"><span class="badge badge-lock">Auditor persona is read-only</span></div>';
+          } else {
+            actionArea =
+              '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;">' +
+              '<span class="badge badge-allow">Maker (' +
+              item.maker +
+              ") != Checker (" +
+              appState.activeAdmin +
+              ") — Eligible to verify</span>" +
+              '<button type="button" class="btn btn-primary" onclick="decideApproval(\'' +
+              item.id +
+              "', 'APPROVED')\">Approve &amp; Apply Change</button>" +
+              '<button type="button" class="btn btn-danger" onclick="decideApproval(\'' +
+              item.id +
+              "', 'REJECTED')\">Reject</button>" +
+              "</div>";
+          }
+        }
+
+        card.innerHTML =
+          '<div class="card-title">' +
+          '<span><span class="mono">' +
+          item.id +
+          "</span> — " +
+          item.summary +
+          "</span>" +
+          statusBadge +
+          "</div>" +
+          '<div class="metric-sub" style="margin-bottom:8px;">' +
+          "<strong>Maker:</strong> <span class='mono'>" +
+          item.maker +
+          "</span> · <strong>Created:</strong> " +
+          item.createdAt +
+          " · <strong>Preview Digest:</strong> <span class='mono'>" +
+          item.digest +
+          "</span>" +
+          "</div>" +
+          '<div class="notice-box" style="margin-bottom:8px;"><strong>Written Reason:</strong> ' +
+          item.reason +
+          "</div>" +
+          '<div class="code-block" style="margin-bottom:6px;">' +
+          '<div style="font-weight:700; margin-bottom:4px;">Bound Simulation Preview (POST /x/v1/simulate):</div>' +
+          impactHtml +
+          "</div>" +
+          actionArea;
+
+        container.appendChild(card);
+      }
+    }
+
+    function decideApproval(reqId, decision) {
+      const item = appState.approvals.find((a) => a.id === reqId);
+      if (!item || item.status !== "PENDING") return;
+      if (item.maker === appState.activeAdmin) return; // P64/P65 guard
+
+      item.status = decision;
+      item.checker = appState.activeAdmin;
+
+      if (decision === "APPROVED") {
+        if (item.effectFn === "applyReq205") {
+          if (!appState.subjects.Bob.compartments.includes("ORCHID")) {
+            appState.subjects.Bob.compartments.push("ORCHID");
+          }
+          appState.resources["CASE-7"].level = 2;
+        } else if (item.effectFn === "applyReq204") {
+          appState.relations.push({
+            id: "REL-APPROVED-204",
+            kind: "approved_grant",
+            subject: "Carol",
+            resource: "CASE-15",
+            validTo: "2027-01-31",
+            detail: "approved grant on CASE-15 until 2027-01-31"
+          });
+        }
+      }
+
+      appendAuditRow(
+        appState.activeAdmin + " (Checker)",
+        item.id + " (Maker: " + item.maker + ")",
+        decision.toLowerCase() + "_change",
+        "ADMIN",
+        ["P64-NO-SELF", "P65-TWO-PERSON", "P73-AUDIT"],
+        "Two-person verification completed: " + item.summary
+      );
+
+      renderModelSubjects();
+      renderApprovals();
+      runSimWhat();
+      runSimWho();
+      runSimImpact();
+    }
+
+    // Screen 6: Break-Glass
+    function updateBgPrecheck() {
+      const subId = document.getElementById("bgSubjectSelect").value;
+      const resId = document.getElementById("bgResourceSelect").value;
+      const sub = appState.subjects[subId];
+      const res = appState.resources[resId];
+      const effLevel = Math.max(res.level, res.parentLevel || 0);
+      const missingComps = res.compartments.filter((c) => !sub.compartments.includes(c));
+
+      const box = document.getElementById("bgPrecheckBox");
+      if (sub.clearance < effLevel || missingComps.length > 0) {
+        box.innerHTML =
+          '<span class="badge badge-deny">STEP 3 BLOCKED</span> <strong>' +
+          subId +
+          "</strong> lacks mandatory clearance or compartments for <strong>" +
+          resId +
+          "</strong> (needs " +
+          LEVEL_NAMES[effLevel] +
+          " and [" +
+          (res.compartments.join(", ") || "∅") +
+          "]). Opening a break-glass grant supplies Step 4 (Reason to Know) only and <strong>will not bypass Step 3</strong>.";
+      } else {
+        box.innerHTML =
+          '<span class="badge badge-allow">STEP 3 SATISFIED</span> <strong>' +
+          subId +
+          "</strong> holds required clearance (" +
+          LEVEL_NAMES[sub.clearance] +
+          ") and compartments for <strong>" +
+          resId +
+          "</strong> on a trusted network. Break-glass will grant temporary 4-hour Step 4 Need-to-Know (<span class='mono'>P105-NTK</span>).";
+      }
+    }
+
+    function updateBgFormState() {
+      const reason = document.getElementById("bgReasonInput").value.trim();
+      document.getElementById("bgCharCounter").textContent =
+        reason.length + " / 20 min chars · Duration: 04:00:00 fixed";
+      const isAuditor = appState.activeAdmin === "Frank";
+      document.getElementById("bgOpenBtn").disabled = reason.length < 20 || isAuditor;
+    }
+
+    function openBreakGlassGrant() {
+      const subId = document.getElementById("bgSubjectSelect").value;
+      const resId = document.getElementById("bgResourceSelect").value;
+      const reason = document.getElementById("bgReasonInput").value.trim();
+      if (reason.length < 20) return;
+
+      const newId = "BG-" + (10 + appState.breakGlassGrants.length);
+      appState.breakGlassGrants.unshift({
+        id: newId,
+        subject: subId,
+        resource: resId,
+        openedBy: appState.activeAdmin,
+        reason: reason,
+        remainingSeconds: 4 * 3600,
+        active: true,
+        cioReviewStatus: "PENDING CIO REVIEW"
+      });
+
+      document.getElementById("bgReasonInput").value = "";
+      updateBgFormState();
+
+      appendAuditRow(
+        appState.activeAdmin,
+        newId + " (" + subId + " → " + resId + ")",
+        "open_break_glass",
+        "ADMIN",
+        ["P105-NTK", "P73-AUDIT"],
+        "Emergency 4h grant opened; CIO notified. Reason: " + reason
+      );
+
+      renderBreakGlass();
+      runSimWhat();
+      runSimWho();
+    }
+
+    function revokeBreakGlass(bgId) {
+      const bg = appState.breakGlassGrants.find((b) => b.id === bgId);
+      if (!bg) return;
+      bg.active = false;
+      bg.remainingSeconds = 0;
+
+      appendAuditRow(
+        appState.activeAdmin,
+        bg.id + " (" + bg.subject + " → " + bg.resource + ")",
+        "revoke_break_glass",
+        "ADMIN",
+        ["P105-NTK", "P73-AUDIT"],
+        "Break-glass grant terminated early"
+      );
+
+      renderBreakGlass();
+      runSimWhat();
+      runSimWho();
+    }
+
+    function reviewBreakGlass(bgId, outcome) {
+      const bg = appState.breakGlassGrants.find((b) => b.id === bgId);
+      if (!bg) return;
+      bg.cioReviewStatus = outcome;
+
+      appendAuditRow(
+        appState.activeAdmin + " (CIO Review)",
+        bg.id,
+        "cio_review_break_glass",
+        "ADMIN",
+        ["P73-AUDIT"],
+        "Break-glass review marked: " + outcome
+      );
+
+      renderBreakGlass();
+    }
+
+    function renderBreakGlass() {
+      const activeList = appState.breakGlassGrants.filter((b) => b.active && b.remainingSeconds > 0);
+      document.getElementById("navBgCount").textContent = activeList.length + " active";
+      document.getElementById("bgActiveCountBadge").textContent = activeList.length + " ACTIVE";
+      document.getElementById("overviewBgMetric").textContent = activeList.length + " Active";
+      document.getElementById("overviewBgSub").textContent =
+        activeList.length > 0
+          ? activeList[0].subject +
+            " → " +
+            activeList[0].resource +
+            " (" +
+            formatSeconds(activeList[0].remainingSeconds) +
+            " left)"
+          : "No active emergency grants";
+
+      const activeContainer = document.getElementById("bgActiveContainer");
+      activeContainer.innerHTML = "";
+      if (activeList.length === 0) {
+        activeContainer.innerHTML = '<div class="notice-box">No active break-glass grants currently open.</div>';
+      } else {
+        for (const bg of activeList) {
+          const box = document.createElement("div");
+          box.className = "notice-box";
+          box.innerHTML =
+            '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">' +
+            '<span><strong class="mono">' +
+            bg.id +
+            "</strong>: <span class='mono'>" +
+            bg.subject +
+            " → " +
+            bg.resource +
+            "</span></span>" +
+            '<span class="badge badge-warn mono" data-bg-timer="' +
+            bg.id +
+            '">TTL ' +
+            formatSeconds(bg.remainingSeconds) +
+            "</span>" +
+            "</div>" +
+            '<div style="margin-bottom:8px;"><strong>Reason:</strong> ' +
+            bg.reason +
+            "</div>" +
+            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+            '<span class="metric-sub">Opened by ' +
+            bg.openedBy +
+            " · CIO notified</span>" +
+            '<button type="button" class="btn btn-danger" onclick="revokeBreakGlass(\'' +
+            bg.id +
+            "')\">End Grant Early</button>" +
+            "</div>";
+          activeContainer.appendChild(box);
+        }
+      }
+
+      const tbody = document.querySelector("#bgReviewTable tbody");
+      tbody.innerHTML = "";
+      for (const bg of appState.breakGlassGrants) {
+        const tr = document.createElement("tr");
+        const winText = bg.active
+          ? '<span class="badge badge-warn mono" data-bg-timer="' +
+            bg.id +
+            '">ACTIVE · ' +
+            formatSeconds(bg.remainingSeconds) +
+            "</span>"
+          : '<span class="badge">CLOSED (00:00:00)</span>';
+        const statusBadge =
+          bg.cioReviewStatus === "PENDING CIO REVIEW"
+            ? '<span class="badge badge-warn">PENDING CIO REVIEW</span>'
+            : '<span class="badge badge-allow">' + bg.cioReviewStatus + "</span>";
+        const actionBtns =
+          bg.cioReviewStatus === "PENDING CIO REVIEW" && appState.activeAdmin !== "Frank"
+            ? '<button type="button" class="btn btn-primary" style="margin-right:6px;" onclick="reviewBreakGlass(\'' +
+              bg.id +
+              "', 'REVIEWED — JUSTIFIED')\">Acknowledge</button>" +
+              '<button type="button" class="btn btn-danger" onclick="reviewBreakGlass(\'' +
+              bg.id +
+              "', 'FLAGGED FOR INQUIRY')\">Flag</button>"
+            : '<span class="metric-sub">Completed</span>';
+
+        tr.innerHTML =
+          '<td class="mono"><strong>' + bg.id + "</strong></td>" +
+          '<td class="mono">' + bg.subject + " → " + bg.resource + "</td>" +
+          '<td class="mono">' + bg.openedBy + "</td>" +
+          "<td>" + bg.reason + "</td>" +
+          "<td>" + winText + "</td>" +
+          "<td>" + statusBadge + "</td>" +
+          "<td>" + actionBtns + "</td>";
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Live 1-second countdown timer for Break-Glass grants
+    setInterval(() => {
+      let anyExpired = false;
+      for (const bg of appState.breakGlassGrants) {
+        if (bg.active && bg.remainingSeconds > 0) {
+          bg.remainingSeconds -= 1;
+          if (bg.remainingSeconds <= 0) {
+            bg.active = false;
+            anyExpired = true;
+          }
+        }
+      }
+      document.querySelectorAll("[data-bg-timer]").forEach((el) => {
+        const id = el.getAttribute("data-bg-timer");
+        const bg = appState.breakGlassGrants.find((b) => b.id === id);
+        if (bg) {
+          el.textContent = "TTL " + formatSeconds(bg.remainingSeconds);
+        }
+      });
+      const activeList = appState.breakGlassGrants.filter((b) => b.active && b.remainingSeconds > 0);
+      if (activeList.length > 0) {
+        document.getElementById("overviewBgSub").textContent =
+          activeList[0].subject +
+          " → " +
+          activeList[0].resource +
+          " (" +
+          formatSeconds(activeList[0].remainingSeconds) +
+          " left)";
+      }
+      if (anyExpired) {
+        renderBreakGlass();
+      }
+    }, 1000);
+
+    // Screen 7: Access Reviews
+    function renderReviews() {
+      const tbody = document.querySelector("#reviewsTable tbody");
+      tbody.innerHTML = "";
+      const pending = appState.reviews.filter((r) => r.status === "PENDING").length;
+      document.getElementById("navReviewsCount").textContent = String(pending);
+      document.getElementById("reviewsPendingMetric").textContent = pending + " Items";
+
+      const isAuditor = appState.activeAdmin === "Frank";
+
+      for (const rev of appState.reviews) {
+        const tr = document.createElement("tr");
+        let statusBadge = '<span class="badge badge-warn">PENDING REVIEW</span>';
+        if (rev.status === "CERTIFIED") {
+          statusBadge = '<span class="badge badge-allow">CERTIFIED (+90d)</span>';
+        } else if (rev.status === "REVOKED") {
+          statusBadge = '<span class="badge badge-deny">REVOKED</span>';
+        }
+
+        const actions =
+          rev.status === "PENDING" && !isAuditor
+            ? '<button type="button" class="btn btn-primary" style="margin-right:6px;" onclick="handleReviewAction(\'' +
+              rev.id +
+              "', 'CERTIFIED')\">Certify (+90d)</button>" +
+              '<button type="button" class="btn btn-danger" onclick="handleReviewAction(\'' +
+              rev.id +
+              "', 'REVOKED')\">Revoke Now</button>"
+            : '<span class="metric-sub">' + rev.status + "</span>";
+
+        tr.innerHTML =
+          '<td class="mono"><strong>' + rev.id + "</strong></td>" +
+          '<td class="mono">' + rev.subject + "</td>" +
+          '<td class="mono">' + rev.target + "</td>" +
+          '<td class="mono">' + rev.kind + "</td>" +
+          '<td class="mono">' + rev.expiry + "</td>" +
+          "<td>" + statusBadge + "</td>" +
+          "<td>" + actions + "</td>";
+        tbody.appendChild(tr);
+      }
+    }
+
+    function handleReviewAction(revId, decision) {
+      const rev = appState.reviews.find((r) => r.id === revId);
+      if (!rev || rev.status !== "PENDING") return;
+      rev.status = decision;
+
+      if (decision === "REVOKED") {
+        if (rev.relationId) {
+          appState.relations = appState.relations.filter((rel) => rel.id !== rev.relationId);
+        }
+        if (rev.compartment) {
+          const sub = appState.subjects[rev.subject];
+          if (sub) {
+            sub.compartments = sub.compartments.filter((c) => c !== rev.compartment);
+          }
+        }
+        rev.expiry = "Expired immediately";
+      } else if (decision === "CERTIFIED") {
+        rev.expiry = "2027-02-05 (90d)";
+      }
+
+      appendAuditRow(
+        appState.activeAdmin + " (Reviewer)",
+        rev.id + " (" + rev.subject + " → " + rev.target + ")",
+        "access_review_" + decision.toLowerCase(),
+        "ADMIN",
+        ["P105-NTK", "P73-AUDIT"],
+        "Access review decision: " + decision + " on " + rev.target
+      );
+
+      renderModelSubjects();
+      renderReviews();
+      runSimWhat();
+      runSimWho();
+      runSimImpact();
+    }
+
+    // Screen 8: Audit Explorer
+    function appendAuditRow(subject, resource, action, effect, rules, relationPath) {
+      const prev = appState.auditEvents[0];
+      const nextSeq = prev ? prev.seq + 1 : 1409;
+      const prevHash = prev ? prev.rowHash : "00000000000000000000";
+      const rowHash =
+        Math.abs((nextSeq * 2654435761) ^ subject.length ^ resource.length)
+          .toString(16)
+          .padStart(8, "0") + "9e41c20b77a3";
+
+      appState.auditEvents.unshift({
+        seq: nextSeq,
+        time: "2026-11-07 01:40:02Z",
+        subject: subject,
+        resource: resource,
+        action: action,
+        effect: effect,
+        rules: rules,
+        relationPath: relationPath,
+        obligations: [],
+        policyVer: "v24 (sha256:9f8a…3c1e)",
+        prevHash: prevHash,
+        rowHash: rowHash
+      });
+      appState.selectedAuditSeq = nextSeq;
+      document.getElementById("headerChainBadge").textContent =
+        "CHAIN VERIFIED: " + nextSeq.toLocaleString() + " ROWS";
+      renderAuditTable();
+    }
+
+    function renderAuditTable() {
+      const search = document.getElementById("auditFilterSearch").value.trim().toLowerCase();
+      const effectFilter = document.getElementById("auditFilterEffect").value;
+      const ruleFilter = document.getElementById("auditFilterRule").value;
+
+      const tbody = document.querySelector("#auditTable tbody");
+      tbody.innerHTML = "";
+
+      const filtered = appState.auditEvents.filter((ev) => {
+        if (effectFilter !== "ALL" && ev.effect !== effectFilter) return false;
+        if (ruleFilter !== "ALL" && !ev.rules.includes(ruleFilter)) return false;
+        if (search) {
+          const hay = (ev.subject + " " + ev.resource + " " + ev.action + " " + ev.rules.join(" ")).toLowerCase();
+          if (!hay.includes(search)) return false;
+        }
+        return true;
+      });
+
+      for (const ev of filtered) {
+        const tr = document.createElement("tr");
+        tr.className = "clickable-row" + (ev.seq === appState.selectedAuditSeq ? " selected-row" : "");
+        tr.addEventListener("click", () => {
+          appState.selectedAuditSeq = ev.seq;
+          renderAuditTable();
+        });
+
+        let effectBadge = '<span class="badge">' + ev.effect + "</span>";
+        if (ev.effect === "ALLOW") effectBadge = '<span class="badge badge-allow">ALLOW</span>';
+        if (ev.effect === "DENY") effectBadge = '<span class="badge badge-deny">DENY</span>';
+        if (ev.effect === "ADMIN") effectBadge = '<span class="badge badge-warn">ADMIN</span>';
+
+        tr.innerHTML =
+          '<td class="mono">#' + ev.seq + "<br><span class='metric-sub'>" + ev.time + "</span></td>" +
+          '<td class="mono"><strong>' + ev.subject + "</strong> → " + ev.resource + "</td>" +
+          '<td class="mono">' + ev.action + "</td>" +
+          "<td>" + effectBadge + "</td>" +
+          '<td class="mono">' + ev.rules.join(", ") + "</td>" +
+          '<td class="mono">v24</td>';
+        tbody.appendChild(tr);
+      }
+
+      renderAuditDetail();
+    }
+
+    function renderAuditDetail() {
+      const ev =
+        appState.auditEvents.find((e) => e.seq === appState.selectedAuditSeq) || appState.auditEvents[0];
+      const box = document.getElementById("auditDetailContent");
+      if (!ev) return;
+
+      box.innerHTML =
+        '<div style="display:flex; flex-direction:column; gap:8px;">' +
+        '<div><strong>Sequence &amp; Timestamp:</strong> <span class="mono">#' +
+        ev.seq +
+        " · " +
+        ev.time +
+        "</span></div>" +
+        '<div><strong>Subject → Resource:</strong> <span class="mono">' +
+        ev.subject +
+        " → " +
+        ev.resource +
+        "</span></div>" +
+        '<div><strong>Action &amp; Effect:</strong> <span class="mono">' +
+        ev.action +
+        "</span> → <strong>" +
+        ev.effect +
+        "</strong></div>" +
+        '<div><strong>Rule IDs Fired:</strong> ' +
+        ev.rules.map((r) => '<span class="badge">' + r + "</span>").join(" ") +
+        "</div>" +
+        '<div><strong>Relation Path / Explanation:</strong> <span class="mono">' +
+        ev.relationPath +
+        "</span></div>" +
+        '<div><strong>Obligations:</strong> <span class="mono">' +
+        (ev.obligations.length ? ev.obligations.join(", ") : "none") +
+        "</span></div>" +
+        '<div><strong>Policy Version Fingerprint:</strong> <span class="mono">' +
+        ev.policyVer +
+        "</span></div>" +
+        '<div class="code-block">' +
+        "prev_hash: sha256:" +
+        ev.prevHash +
+        "\n" +
+        "row_hash:  sha256:" +
+        ev.rowHash +
+        "\n" +
+        "content_bytes_logged: 0 (P73 / P96 invariant: IDs, rule IDs & digests only)" +
+        "</div>" +
+        "</div>";
+    }
+
+    function verifyAuditChain() {
+      const head = appState.auditEvents[0];
+      document.getElementById("auditChainStatusBadge").textContent =
+        "CHAIN VERIFIED · " + appState.auditEvents.length + " VISIBLE LINKS CHECKED (0 TAMPERING)";
+      document.getElementById("auditHeadDigestText").textContent =
+        "Verified at 2026-11-07T01:40:15Z · Head #" + head.seq + " (" + head.rowHash + ")";
+    }
+
+    // Screen 9: Compliance Bundle Export
+    function exportComplianceBundle() {
+      const card = document.getElementById("complianceExportCard");
+      const pre = document.getElementById("complianceExportPre");
+      card.style.display = "block";
+      const bundle = {
+        product: "Qadamar Control Plane Evidence Pack",
+        generated_at: "2026-11-07T01:40:30Z",
+        domain: "case-files-app (fictional toy domain)",
+        policy_version: appState.policyVersion,
+        policy_fingerprint: appState.policyFingerprint,
+        mandatory_invariants_locked: [
+          "P18-INACTIVE",
+          "P01-RBAC",
+          "P02-BLP-READ",
+          "P03-BLP-WRITE",
+          "P30-COMP",
+          "P40-EFF-LEVEL",
+          "BIBA-NWU",
+          "P64-NO-SELF",
+          "P65-TWO-PERSON",
+          "P105-NTK",
+          "P121-NET"
+        ],
+        audit_chain: {
+          status: "VERIFIED",
+          head_sequence: appState.auditEvents[0].seq,
+          head_sha256: appState.auditEvents[0].rowHash,
+          business_content_bytes_included: 0
+        },
+        signature_ed25519: "sig:ed25519:4419a8c02b7e1190f3d288a71b04c99e"
+      };
+      pre.textContent = JSON.stringify(bundle, null, 2);
+    }
+
+    // Policy Version Selector in Screen 3
+    document.getElementById("policyVersionSelect").addEventListener("change", (e) => {
+      const v = e.target.value;
+      const box = document.getElementById("cedarPolicyText");
+      if (v === "v23") {
+        box.textContent =
+          '// Qadamar Tenant Policy Pack — Domain: Case Files (v23 — SUPERSEDED)\n' +
+          '// Fingerprint: sha256:4b11e029a8c31109a4\n\n' +
+          '@id("CEDAR-01-READ-CASE")\n' +
+          'permit (principal, action == Action::"read", resource is CaseFile)\n' +
+          'when { resource.status != "archived_sealed" || principal.role == "security_officer" };\n\n' +
+          '@id("CEDAR-02-WRITE-ACTIVE-ONLY")\n' +
+          'forbid (principal, action == Action::"write", resource is CaseFile)\n' +
+          'when { resource.status == "archived_sealed" };';
+      } else if (v === "v25-draft") {
+        box.textContent =
+          '// Qadamar Tenant Policy Pack — Domain: Case Files (v25-draft — CANDIDATE)\n' +
+          '// Requires Simulation Preview (POST /x/v1/simulate) + Two-Person Approval (P65)\n\n' +
+          '@id("CEDAR-01-READ-CASE")\n' +
+          'permit (principal, action == Action::"read", resource is CaseFile)\n' +
+          'when { resource.status != "archived_sealed" || principal.role == "security_officer" };\n\n' +
+          '@id("CEDAR-02-WRITE-ACTIVE-ONLY")\n' +
+          'forbid (principal, action == Action::"write", resource is CaseFile)\n' +
+          'when { resource.status == "closed" || resource.status == "under_audit_freeze" };';
+      } else {
+        box.textContent =
+          '// Qadamar Tenant Policy Pack — Domain: Case Files (v24)\n' +
+          '// Evaluated at Step 5 (after P18, P01, P02/P40, P30, P121, P105-NTK)\n\n' +
+          '@id("CEDAR-01-READ-CASE")\n' +
+          'permit (\n' +
+          '  principal,\n' +
+          '  action == Action::"read",\n' +
+          '  resource is CaseFile\n' +
+          ') when {\n' +
+          '  resource.status != "archived_sealed" || principal.role == "security_officer"\n' +
+          '};\n\n' +
+          '@id("CEDAR-02-WRITE-ACTIVE-ONLY")\n' +
+          'forbid (\n' +
+          '  principal,\n' +
+          '  action == Action::"write",\n' +
+          '  resource is CaseFile\n' +
+          ') when {\n' +
+          '  resource.status == "closed"\n' +
+          '};\n\n' +
+          '@id("ABAC-CONTENT-FIN-ANNEX")\n' +
+          '// Step 6 Obligation: mask financial_annex segment unless finance-cleared or case_lead\n' +
+          '@obligation("mask_segment:financial_annex")\n' +
+          'permit (\n' +
+          '  principal,\n' +
+          '  action == Action::"read",\n' +
+          '  resource is CaseFile\n' +
+          ') when {\n' +
+          '  resource.has_financial_annex == true && principal.role != "case_lead"\n' +
+          '};';
+      }
+    });
+
+    // Initial render on page load
+    renderModelSubjects();
+    runSimWhat();
+    runSimWho();
+    runSimImpact();
+    renderApprovals();
+    updateBgPrecheck();
+    updateBgFormState();
+    renderBreakGlass();
+    renderReviews();
+    renderAuditTable();
+  </script>
+</body>
+</html>

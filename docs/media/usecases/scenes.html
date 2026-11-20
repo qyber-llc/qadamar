@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qadamar — use cases (video source)</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f3f6f4; }
+  svg { display: block; font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
+</style>
+<link rel="stylesheet" href="../../../design/gate-brand.css">
+<link rel="stylesheet" href="../brand.css">
+</head>
+<body>
+<div id="root"></div>
+<script>
+// Source of docs/media/usecases/gate-usecases.mp4. Every frame is a pure function of time: build.mjs calls
+// setTimes() once, then frame(t) for each frame. Open this file in a browser and use ?t=12.5 to inspect one frame.
+const brand = getComputedStyle(document.documentElement);
+const token = (name) => brand.getPropertyValue('--gate-' + name).trim();
+const C = { ground: token('bg'), sheet: token('surface'), ink: token('text'),
+  ink2: token('secondary'), ink3: token('muted'), rule: token('line-strong'),
+  gate: token('allow'), gateSoft: token('allow-soft'), no: token('deny'),
+  noSoft: token('deny-soft'), blue: token('info'), blueSoft: token('info-soft'),
+  amber: token('warning'), amberSoft: token('warning-soft') };
+
+// On-screen text. The narration lives in script.json; scene ids must match.
+const SCENES = {
+  intro:    { title: '' },
+  billes:   { title: 'One request, one marble', chips: ['Always the same order', 'One no is enough'] },
+  paiement: { n: 1, title: 'Payment: the creator cannot approve', chips: ['create ≠ approve', 'create ≠ release', 'separation of duties'] },
+  urgence:  { n: 2, title: 'Emergency: break the glass', chips: ['time-limited access', 'no extra clearance'] },
+  niveaux:  { n: 3, title: 'Classification levels, L0 to L3', chips: ['no read up', 'no write down'] },
+  contexte: { n: 4, title: 'Context matters', chips: ['checked on every request', 'missing signal = no'] },
+  regles:   { n: 5, title: 'Changing a rule takes two people', chips: ['impact first', 'no self-approval'] },
+  journal:  { n: 6, title: 'A log where any change shows', chips: ['chained decisions', 'verify on demand'] },
+  fin:      {},
+};
+
+let TIMES = [];
+window.setTimes = (a) => { TIMES = a; };
+
+const cl = (x) => Math.max(0, Math.min(1, x));
+const ez = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const k = (p, a, b) => ez(cl((p - a) / (b - a)));
+const L = (a, b, u) => a + (b - a) * u;
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const tx = (x, y, size, s, o = {}) =>
+  `<text x="${x}" y="${y}" font-size="${size}" fill="${o.fill || C.ink}" font-weight="${o.w || 500}" text-anchor="${o.a || 'start'}" opacity="${o.op ?? 1}"${o.ls ? ` letter-spacing="${o.ls}"` : ''}>${esc(s)}</text>`;
+const tw = (s, size) => s.length * size * 0.53; // shortcut: approximate text width, fine for short labels
+
+function check(x, y, r, u, color = C.gate) {
+  if (u <= 0) return '';
+  const s = L(0.6, 1, u);
+  return `<g transform="translate(${x} ${y}) scale(${s})" opacity="${u}"><circle r="${r}" fill="${color}"/>` +
+    `<path d="M${-r * 0.42} ${r * 0.02} L${-r * 0.1} ${r * 0.34} L${r * 0.46} ${-r * 0.3}" fill="none" stroke="${C.ground}" stroke-width="${r * 0.18}" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+function cross(x, y, r, u, color = C.no) {
+  if (u <= 0) return '';
+  const s = L(0.6, 1, u), d = r * 0.38;
+  return `<g transform="translate(${x} ${y}) scale(${s})" opacity="${u}"><circle r="${r}" fill="${color}"/>` +
+    `<path d="M${-d} ${-d} L${d} ${d} M${d} ${-d} L${-d} ${d}" stroke="${C.ground}" stroke-width="${r * 0.18}" stroke-linecap="round"/></g>`;
+}
+function key(x, y, s, color, rot = 0) {
+  return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})"><circle cx="-22" cy="0" r="16" fill="none" stroke="${color}" stroke-width="7"/>` +
+    `<path d="M-6 0 H30 M18 0 V12 M28 0 V9" stroke="${color}" stroke-width="7" stroke-linecap="round"/></g>`;
+}
+// An actor is a role badge with a key, never a person.
+function badge(x, y, label, color, u, sub) {
+  if (u <= 0) return '';
+  const w = Math.max(300, tw(label, 30) + 140, sub ? tw(sub, 22) + 130 : 0), h = 96;
+  return `<g transform="translate(${x} ${y + (1 - u) * 24})" opacity="${u}">` +
+    `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="22" fill="${C.sheet}" stroke="${color}" stroke-width="3"/>` +
+    `<rect x="${-w / 2 + 14}" y="${-h / 2 + 14}" width="68" height="68" rx="16" fill="${color}" opacity=".14"/>` +
+    key(-w / 2 + 50, 0, 0.72, color, -35) +
+    tx(-w / 2 + 100, sub ? -4 : 10, 30, label, { w: 650 }) +
+    (sub ? tx(-w / 2 + 100, 28, 22, sub, { fill: C.ink3 }) : '') + `</g>`;
+}
+function chip(x, y, s, u, tone = 'gate', size = 28) {
+  if (u <= 0) return '';
+  const col = { gate: C.gate, no: C.no, ink: C.ink2, amber: C.amber }[tone];
+  const soft = { gate: C.gateSoft, no: C.noSoft, ink: 'rgba(232,238,240,.06)', amber: C.amberSoft }[tone];
+  const w = tw(s, size) + 56;
+  return `<g opacity="${u}" transform="translate(${x} ${y + (1 - u) * 14})"><rect x="0" y="${-size * 1.1}" width="${w}" height="${size * 2.1}" rx="${size * 1.05}" fill="${soft}" stroke="${col}" stroke-opacity=".35"/>` +
+    tx(28, size * 0.36, size, s, { fill: col, w: 600 }) + `</g>`;
+}
+function marble(x, y, r, color = C.gate, op = 1) {
+  return `<g opacity="${op}"><circle cx="${x}" cy="${y}" r="${r}" fill="${color}"/>` +
+    `<circle cx="${x - r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.32}" fill="#fff" opacity=".45"/></g>`;
+}
+function barrier(x, y, openU, label, tone) {
+  const ang = -L(0, 80, openU), col = tone === 'no' ? C.no : C.ink2;
+  return `<g><rect x="${x - 9}" y="${y - 120}" width="18" height="120" rx="6" fill="${col}"/>` +
+    `<g transform="translate(${x} ${y - 104}) rotate(${ang})"><rect x="-6" y="-9" width="120" height="18" rx="9" fill="${tone === 'no' ? C.no : C.sheet}" stroke="${col}" stroke-width="3"/>` +
+    `<rect x="30" y="-9" width="22" height="18" fill="${col}" opacity=".5"/><rect x="74" y="-9" width="22" height="18" fill="${col}" opacity=".5"/></g>` +
+    (label ? tx(x, y + 44, 24, label, { a: 'middle', fill: C.ink3, w: 600 }) : '') + `</g>`;
+}
+function gateIcon(x, y, s, openU) {
+  return `<g transform="translate(${x} ${y}) scale(${s})">` +
+    `<path d="M-130 120 V-60 Q-130 -150 0 -150 Q130 -150 130 -60 V120" fill="none" stroke="${C.gate}" stroke-width="22" stroke-linecap="round"/>` +
+    `<rect x="-160" y="110" width="320" height="22" rx="11" fill="${C.ink}"/>` +
+    `<g transform="translate(-100 30) rotate(${-L(0, 70, openU)})"><rect x="0" y="-10" width="200" height="20" rx="10" fill="${C.sheet}" stroke="${C.ink}" stroke-width="5"/>` +
+    `<rect x="50" y="-10" width="30" height="20" fill="${C.ink}"/><rect x="120" y="-10" width="30" height="20" fill="${C.ink}"/></g></g>`;
+}
+function card(x, y, w, h, title, lines, opt = {}) {
+  let s = `<g transform="translate(${x} ${y})" opacity="${opt.op ?? 1}"><rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="24" fill="${opt.fill || C.sheet}" stroke="${opt.stroke || C.rule}" stroke-width="3"/>`;
+  s += tx(-w / 2 + 32, -h / 2 + 58, 32, title, { w: 700 });
+  for (let i = 0; i < lines; i++) s += `<rect x="${-w / 2 + 32}" y="${-h / 2 + 90 + i * 30}" width="${(w - 64) * (i % 2 ? 0.62 : 0.86)}" height="12" rx="6" fill="${C.ink}" opacity=".12"/>`;
+  return s + `</g>`;
+}
+function arrow(x1, y1, x2, y2, u, color, dashed) {
+  if (u <= 0) return '';
+  const xe = L(x1, x2, u), ye = L(y1, y2, u), a = Math.atan2(y2 - y1, x2 - x1);
+  const hx = (d, o) => xe - d * Math.cos(a + o), hy = (d, o) => ye - d * Math.sin(a + o);
+  return `<g><path d="M${x1} ${y1} L${xe} ${ye}" stroke="${color}" stroke-width="7" stroke-linecap="round"${dashed ? ' stroke-dasharray="4 16"' : ''}/>` +
+    `<path d="M${hx(26, 0.5)} ${hy(26, 0.5)} L${xe} ${ye} L${hx(26, -0.5)} ${hy(26, -0.5)}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+
+// ---- scenes: (p = 0..1 progress, lt = seconds into the scene) -> SVG markup for the stage ----
+const DRAW = {
+  intro(p) {
+    let s = gateIcon(960, 560, 1.25, k(p, 0.35, 0.5) * (1 - k(p, 0.62, 0.72)));
+    s += tx(960, 250, 92, 'Qadamar', { a: 'middle', w: 800, op: k(p, 0, 0.15) });
+    s += tx(960, 330, 40, 'Who may see or do what?', { a: 'middle', fill: C.ink2, op: k(p, 0.05, 0.2) });
+    for (let i = 0; i < 5; i++) {
+      const u = cl((p - 0.12 - i * 0.07) / 0.5);
+      if (u <= 0 || u >= 1) continue;
+      const x = L(300, 1620, u), blocked = i === 3;
+      const xx = blocked ? Math.min(x, 860) : x;
+      s += marble(xx, 685, 26, blocked ? C.no : C.gate, blocked && x > 860 ? 1 - cl((x - 860) / 200) : 1);
+    }
+    s += chip(560, 880, 'decides on every request', k(p, 0.3, 0.42));
+    s += chip(1000, 880, 'keeps a record', k(p, 0.6, 0.72), 'ink');
+    return s;
+  },
+  billes(p) {
+    let s = `<path d="M180 640 H1560" stroke="${C.ink}" stroke-width="10" stroke-linecap="round" opacity=".85"/>`;
+    s += `<path d="M1560 640 q60 0 70 60 v60 h120 v-60" fill="none" stroke="${C.gate}" stroke-width="10" stroke-linecap="round"/>` + tx(1690, 820, 34, 'YES', { a: 'middle', fill: C.gate, w: 800 });
+    s += `<rect x="1060" y="760" width="160" height="80" rx="14" fill="${C.noSoft}" stroke="${C.no}" stroke-width="4"/>` + tx(1140, 890, 30, 'NO', { a: 'middle', fill: C.no, w: 800 });
+    const xs = [...Array(9)].map((_, i) => 300 + i * 140);
+    const m1 = cl((p - 0.1) / 0.35), m2 = cl((p - 0.5) / 0.28);
+    const x1 = L(200, 1600, m1), x2 = L(200, 1140, m2);
+    xs.forEach((x, i) => {
+      const near1 = Math.abs(x1 - x) < 120 && m1 > 0 && m1 < 1;
+      const stop = i === 6 && p > 0.5;
+      const near2 = Math.abs(x2 - x) < 120 && m2 > 0 && !stop;
+      s += barrier(x, 640, stop ? 0 : (near1 || near2 ? 1 : 0), String(i + 1).padStart(2, '0'), stop && m2 > 0.9 ? 'no' : '');
+    });
+    if (m1 > 0) s += m1 < 1 ? marble(x1, 610, 28) : marble(1690, 730, 28);
+    if (m2 > 0) {
+      const fall = cl((p - 0.8) / 0.08);
+      s += marble(L(x2, 1140, fall), L(610, 800, fall * fall), 28, C.blue);
+    }
+    s += tx(960, 340, 30, 'Mandatory checks run before the customer’s own rules.', { a: 'middle', fill: C.ink2, op: k(p, 0.05, 0.15) });
+    return s;
+  },
+  paiement(p) {
+    const status = p > 0.84 ? 'approved' : 'pending';
+    let s = card(960, 560, 440, 340, 'Payment', 3, { stroke: p > 0.84 ? C.gate : C.rule, op: k(p, 0, 0.08) });
+    s += tx(792, 690, 24, 'status: ' + status, { fill: p > 0.84 ? C.gate : C.amber, w: 650, op: k(p, 0, 0.08) });
+    const btn = (x, label, tone) => `<g><rect x="${x - 90}" y="600" width="180" height="56" rx="14" fill="${tone === 'no' ? C.noSoft : tone === 'ok' ? C.gateSoft : 'rgba(232,238,240,.05)'}" stroke="${tone === 'no' ? C.no : tone === 'ok' ? C.gate : C.rule}" stroke-width="3"/>` + tx(x, 637, 24, label, { a: 'middle', w: 650 }) + `</g>`;
+    const tryA = p > 0.32 && p < 0.52, tryR = p > 0.5 && p < 0.7, okA = p > 0.76;
+    s += `<g opacity="${k(p, 0, 0.08)}">` + btn(860, 'Approve', tryA ? 'no' : okA ? 'ok' : '') + btn(1060, 'Release', tryR ? 'no' : '') + `</g>`;
+    s += badge(330, 560, 'Creator', C.blue, k(p, 0.06, 0.16), 'created this payment');
+    s += arrow(480, 520, 735, 470, k(p, 0.14, 0.24) * (1 - k(p, 0.28, 0.32)), C.blue);
+    s += tx(610, 470, 26, 'create', { fill: C.blue, w: 700, a: 'middle', op: k(p, 0.16, 0.22) * (1 - k(p, 0.28, 0.32)) });
+    s += arrow(480, 590, 770, 628, k(p, 0.32, 0.4) * (1 - k(p, 0.5, 0.53)), C.no, true);
+    s += arrow(480, 560, 1060, 594, k(p, 0.52, 0.58) * (1 - k(p, 0.7, 0.73)), C.no, true);
+    s += cross(860, 560, 30, k(p, 0.4, 0.46) * (1 - k(p, 0.5, 0.53)));
+    s += cross(1060, 560, 30, k(p, 0.56, 0.62) * (1 - k(p, 0.7, 0.73)));
+    s += chip(250, 780, 'NO: same person', k(p, 0.42, 0.48) * (1 - k(p, 0.72, 0.76)), 'no');
+    s += badge(1590, 560, 'Approver', C.gate, k(p, 0.7, 0.78), 'a different person');
+    s += arrow(1440, 520, 900, 596, k(p, 0.76, 0.84), C.gate, true);
+    s += check(860, 560, 30, k(p, 0.84, 0.9));
+    return s;
+  },
+  urgence(p) {
+    let s = '';
+    const crack = k(p, 0.06, 0.14), gone = k(p, 0.16, 0.24);
+    s += `<g opacity="${1 - gone}"><rect x="330" y="410" width="300" height="300" rx="20" fill="rgba(159,216,255,.10)" stroke="${C.blue}" stroke-width="5"/>` +
+      `<path d="M480 560 L420 450 M480 560 L590 480 M480 560 L560 690 M480 560 L360 640" stroke="${C.blue}" stroke-width="4" opacity="${crack}"/>` +
+      tx(480, 760, 26, 'break glass', { a: 'middle', fill: C.blue, w: 650 }) + `</g>`;
+    const go = k(p, 0.18, 0.3), toDoor = k(p, 0.72, 0.8), back = k(p, 0.82, 0.86);
+    let kx = L(480, 700, go), ky = 560;
+    if (toDoor > 0) kx = L(700, 1340, toDoor) - back * 90;
+    const ring = cl((p - 0.3) / 0.65), show = k(p, 0.26, 0.32) * (1 - k(p, 0.68, 0.72));
+    if (show > 0) {
+      const a = 2 * Math.PI * (1 - ring), r = 110;
+      s += `<g opacity="${show}"><circle cx="700" cy="560" r="${r}" fill="none" stroke="${C.rule}" stroke-width="14"/>` +
+        `<path d="M700 ${560 - r} A${r} ${r} 0 ${a > Math.PI ? 1 : 0} 1 ${700 + r * Math.sin(a)} ${560 - r * Math.cos(a)}" fill="none" stroke="${C.amber}" stroke-width="14" stroke-linecap="round"/>` +
+        tx(700, 720, 30, '4 h at most', { a: 'middle', fill: C.amber, w: 700 }) + `</g>`;
+    }
+    s += key(kx, ky, 2, C.amber, -20);
+    const rows = [['never for yourself', 0.36], ['an alert goes out', 0.44], ['reviewed by someone else', 0.52]];
+    rows.forEach(([t, at], i) => {
+      const u = k(p, at, at + 0.06) * (1 - k(p, 0.66, 0.7));
+      s += check(1000, 450 + i * 110, 26, u, C.amber) + tx(1046, 460 + i * 110, 34, t, { op: u, w: 600 });
+    });
+    const door = k(p, 0.68, 0.74);
+    if (door > 0) {
+      s += `<g opacity="${door}"><rect x="1400" y="380" width="260" height="360" rx="18" fill="${C.sheet}" stroke="${C.ink}" stroke-width="5"/>` +
+        tx(1530, 470, 64, 'L3', { a: 'middle', w: 800 }) +
+        `<rect x="1490" y="560" width="80" height="64" rx="10" fill="${C.ink}"/><path d="M1505 560 v-24 a25 25 0 0 1 50 0 v24" fill="none" stroke="${C.ink}" stroke-width="10"/></g>`;
+      s += cross(1530, 680, 32, k(p, 0.84, 0.88));
+      s += chip(1300, 830, 'grants no extra clearance', k(p, 0.86, 0.9), 'no');
+    }
+    return s;
+  },
+  niveaux(p) {
+    let s = '';
+    const shelves = ['L3', 'L2', 'L1', 'L0'];
+    shelves.forEach((l, i) => {
+      const y = 320 + i * 140, u = k(p, 0.02 + i * 0.03, 0.1 + i * 0.03);
+      s += `<g opacity="${u}"><rect x="900" y="${y}" width="720" height="110" rx="18" fill="${C.ink}" fill-opacity="${0.16 - i * 0.035}" stroke="${C.rule}" stroke-width="3"/>` +
+        tx(940, y + 72, 48, l, { w: 800 });
+      for (let d = 0; d < 4; d++) s += `<rect x="${1080 + d * 120}" y="${y + 22}" width="80" height="66" rx="8" fill="${C.sheet}" stroke="${C.rule}" stroke-width="2"/>`;
+      s += `</g>`;
+    });
+    s += badge(400, 515, 'Clearance L2', C.blue, k(p, 0.06, 0.14), 'session opened at L2');
+    [1, 2, 3].forEach((i, j) => {
+      const y = 375 + i * 140;
+      s += arrow(560, 515, 880, y, k(p, 0.16 + j * 0.05, 0.22 + j * 0.05), C.gate);
+      s += check(1580, y, 26, k(p, 0.22 + j * 0.05, 0.26 + j * 0.05));
+    });
+    s += arrow(560, 500, 880, 375, k(p, 0.38, 0.46), C.no, true);
+    s += cross(1580, 375, 26, k(p, 0.46, 0.5));
+    s += chip(380, 330, 'read up: no', k(p, 0.46, 0.5), 'no');
+    const w = k(p, 0.66, 0.76);
+    if (w > 0) {
+      s += `<g opacity="${w}"><rect x="${L(1260, 1260, w)}" y="${L(480, 560, w)}" width="80" height="66" rx="8" fill="${C.noSoft}" stroke="${C.no}" stroke-width="4"/></g>`;
+      s += arrow(1300, 540, 1300, 640, w, C.no, true);
+    }
+    s += cross(1300, 690, 26, k(p, 0.76, 0.8));
+    s += chip(380, 760, 'write down: no', k(p, 0.78, 0.82), 'no');
+    return s;
+  },
+  contexte(p) {
+    let s = '';
+    const S = [
+      { x: 560, y: 420, t: 'Network', ic: 'net' }, { x: 1360, y: 420, t: 'Time', ic: 'clock' },
+      { x: 560, y: 720, t: 'Device', ic: 'dev' }, { x: 1360, y: 720, t: 'Recent sign-in', ic: 'mfa' },
+    ];
+    const netBad = p > 0.4, devMissing = p > 0.7;
+    S.forEach((o, i) => {
+      const u = k(p, 0.04 + i * 0.05, 0.1 + i * 0.05);
+      const bad = (i === 0 && netBad) || (i === 2 && devMissing);
+      const col = i === 2 && devMissing ? C.ink3 : i === 0 && netBad ? C.amber : C.gate;
+      s += `<g opacity="${u}" transform="translate(${o.x} ${o.y})"><circle r="84" fill="${C.sheet}" stroke="${col}" stroke-width="5"${i === 2 && devMissing ? ' stroke-dasharray="10 12"' : ''}/>`;
+      if (i === 2 && devMissing) s += tx(0, 26, 80, '?', { a: 'middle', fill: C.ink3, w: 800 });
+      else if (o.ic === 'net') s += `<path d="M-40 -6 a56 56 0 0 1 80 0 M-26 10 a36 36 0 0 1 52 0" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round"/><circle cx="0" cy="30" r="9" fill="${col}"/>`;
+      else if (o.ic === 'clock') s += `<circle r="44" fill="none" stroke="${col}" stroke-width="8"/><path d="M0 -26 V0 L20 14" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round"/>`;
+      else if (o.ic === 'dev') s += `<rect x="-46" y="-34" width="92" height="58" rx="6" fill="none" stroke="${col}" stroke-width="8"/><path d="M-58 36 H58" stroke="${col}" stroke-width="8" stroke-linecap="round"/>`;
+      else s += `<rect x="-30" y="-6" width="60" height="46" rx="8" fill="${col}"/><path d="M-18 -6 v-14 a18 18 0 0 1 36 0 v14" fill="none" stroke="${col}" stroke-width="8"/>`;
+      s += `</g>` + tx(o.x, o.y + 136, 30, o.t, { a: 'middle', w: 650, op: u });
+      if (i === 0) s += tx(o.x, o.y + 174, 24, 'off the trusted network', { a: 'middle', fill: C.amber, w: 600, op: k(p, 0.4, 0.46) });
+      if (i === 2) s += tx(o.x, o.y + 174, 24, 'signal missing', { a: 'middle', fill: C.ink3, w: 600, op: k(p, 0.7, 0.76) });
+      s += `<path d="M${o.x + (o.x < 960 ? 90 : -90)} ${o.y + (o.y < 560 ? 40 : -40)} L${960 + (o.x < 960 ? -110 : 110)} ${570 + (o.y < 560 ? -50 : 50)}" stroke="${bad ? col : C.rule}" stroke-width="5" opacity="${u}"/>`;
+    });
+    s += `<circle cx="960" cy="570" r="120" fill="${C.sheet}" stroke="${C.rule}" stroke-width="4"/>`;
+    s += marble(960, 570, 48, C.blue);
+    s += check(960, 570, 56, k(p, 0.24, 0.3) * (1 - k(p, 0.36, 0.4)));
+    // Level gauge: outside the trusted network the reachable level drops (untrusted-network cap).
+    const cap = k(p, 0.44, 0.54), gu = k(p, 0.38, 0.44) * (1 - k(p, 0.66, 0.7));
+    if (gu > 0) {
+      s += `<g opacity="${gu}">` + ['L3', 'L2', 'L1', 'L0'].map((l, i) => {
+        const on = 3 - i <= L(3, 1, cap) + 0.01;
+        return `<rect x="1660" y="${400 + i * 80}" width="120" height="64" rx="10" fill="${on ? C.gateSoft : 'rgba(232,238,240,.05)'}" stroke="${on ? C.gate : C.rule}" stroke-width="3"/>` + tx(1720, 444 + i * 80, 28, l, { a: 'middle', w: 700, fill: on ? C.gate : C.ink3 });
+      }).join('') + tx(1720, 750, 24, 'reachable level', { a: 'middle', fill: C.ink2 }) + `</g>`;
+    }
+    s += cross(960, 570, 56, k(p, 0.8, 0.86));
+    return s;
+  },
+  regles(p) {
+    let s = card(520, 560, 380, 300, 'Rule', 4, { stroke: p > 0.88 ? C.gate : C.rule });
+    s += `<rect x="${360}" y="${620}" width="${L(0, 220, k(p, 0.06, 0.18))}" height="14" rx="7" fill="${C.amber}"/>`;
+    s += badge(520, 320, 'Author', C.blue, k(p, 0.02, 0.1), 'proposes a change');
+    const im = k(p, 0.2, 0.3);
+    s += `<g opacity="${im}"><rect x="820" y="410" width="460" height="300" rx="24" fill="${C.sheet}" stroke="${C.ink2}" stroke-width="3"/>` +
+      tx(852, 466, 32, 'Impact', { w: 700 }) +
+      tx(852, 530, 26, 'gain access', { fill: C.gate, w: 650 }) + tx(852, 630, 26, 'lose access', { fill: C.no, w: 650 });
+    for (let i = 0; i < 3; i++) s += key(870 + i * 70, 572, 0.6, C.gate, -30);
+    for (let i = 0; i < 2; i++) s += key(870 + i * 70, 672, 0.6, C.no, -30);
+    s += `</g>`;
+    s += arrow(740, 320, 1440, 320, k(p, 0.5, 0.58) * (1 - k(p, 0.68, 0.72)), C.no, true);
+    s += cross(1500, 320, 40, k(p, 0.56, 0.6) * (1 - k(p, 0.7, 0.73)));
+    s += chip(1300, 400, 'not your own change', k(p, 0.56, 0.6) * (1 - k(p, 0.7, 0.73)), 'no', 24);
+    s += badge(1560, 600, 'Approver', C.gate, k(p, 0.68, 0.76), 'a different person');
+    s += arrow(1500, 545, 1500, 375, k(p, 0.76, 0.82), C.gate);
+    s += check(1500, 320, 40, k(p, 0.82, 0.86));
+    s += chip(1560, 330, 'published', k(p, 0.86, 0.9), 'gate');
+    return s;
+  },
+  journal(p) {
+    let s = '';
+    const n = 6, x0 = 270, step = 276, y = 560, bad = 2;
+    const edited = k(p, 0.5, 0.56), broken = k(p, 0.6, 0.7);
+    for (let i = 0; i < n; i++) {
+      const u = k(p, 0.03 + i * 0.05, 0.09 + i * 0.05), x = x0 + i * step;
+      const isBad = i === bad && edited > 0;
+      s += `<g opacity="${u}" transform="translate(${x} ${y + (1 - u) * 30})"><rect x="-95" y="-80" width="190" height="160" rx="18" fill="${isBad ? C.amberSoft : C.sheet}" stroke="${isBad ? C.amber : C.ink2}" stroke-width="4"/>` +
+        tx(-66, -30, 26, 'decision', { fill: C.ink3, w: 600 });
+      for (let l = 0; l < 2; l++) s += `<rect x="-66" y="${-6 + l * 26}" width="${l ? 90 : 130}" height="12" rx="6" fill="${isBad ? C.amber : C.ink}" opacity="${isBad ? 0.6 : 0.14}"/>`;
+      s += tx(-66, 66, 22, '#', { fill: C.gate, w: 800 }) + `<rect x="-44" y="54" width="100" height="12" rx="6" fill="${C.gate}" opacity=".35"/></g>`;
+      if (i < n - 1) {
+        const lu = k(p, 0.08 + i * 0.05, 0.13 + i * 0.05), after = i >= bad;
+        const col = after && broken > 0 ? C.no : C.gate, gap = after ? broken * 18 : 0;
+        s += `<g opacity="${lu}"><ellipse cx="${x + 125 - gap}" cy="${y}" rx="26" ry="16" fill="none" stroke="${col}" stroke-width="8"/><ellipse cx="${x + 151 + gap}" cy="${y}" rx="26" ry="16" fill="none" stroke="${col}" stroke-width="8"/></g>`;
+      }
+    }
+    const mag = k(p, 0.72, 0.8), mx = L(270, x0 + bad * step, k(p, 0.74, 0.86));
+    if (mag > 0) s += `<g opacity="${mag}"><circle cx="${mx}" cy="400" r="54" fill="none" stroke="${C.ink}" stroke-width="10"/><path d="M${mx + 38} 438 l40 40" stroke="${C.ink}" stroke-width="14" stroke-linecap="round"/></g>`;
+    s += chip(660, 790, 'one entry altered: the chain breaks', k(p, 0.62, 0.68), 'no');
+    s += chip(760, 330 - 30, 'verification: change detected', k(p, 0.86, 0.9), 'amber', 26);
+    return s;
+  },
+  fin(p) {
+    let s = gateIcon(960, 430, 0.95, 0);
+    s += tx(960, 690, 96, 'Qadamar', { a: 'middle', w: 800, op: k(p, 0.05, 0.2) });
+    s += tx(960, 770, 38, 'Your access rules in one place, not scattered through the code.', { a: 'middle', fill: C.ink2, op: k(p, 0.15, 0.3) });
+    s += tx(960, 980, 22, 'Illustrated examples. Every behaviour shown exists in version 0.12.2 (pre-1.0).', { a: 'middle', fill: C.ink3, op: k(p, 0.3, 0.45) });
+    return s;
+  },
+};
+
+function header(meta, id) {
+  if (id === 'fin') return '';
+  let s = tx(120, 120, 28, 'Qadamar', { fill: C.gate, w: 700 });
+  if (meta.n) {
+    s += tx(1800, 120, 26, `Case ${meta.n} of 6`, { a: 'end', fill: C.ink3, w: 600 });
+    for (let i = 1; i <= 6; i++) s += `<circle cx="${1560 + i * 28}" cy="150" r="8" fill="${i <= meta.n ? C.gate : C.rule}"/>`;
+  }
+  s += tx(120, 210, 64, meta.title, { w: 760 });
+  return s;
+}
+function chipsRow(meta, p) {
+  if (!meta.chips) return '';
+  let x = 120, s = '';
+  meta.chips.forEach((c, i) => { s += chip(x, 980, c, k(p, 0.12 + i * 0.12, 0.2 + i * 0.12), 'ink', 26); x += tw(c, 26) + 80; });
+  return s;
+}
+
+window.frame = (t) => {
+  const sc = TIMES.find((s) => t >= s.start && t < s.start + s.dur) || TIMES[TIMES.length - 1];
+  const lt = t - sc.start, p = cl(lt / sc.dur), meta = SCENES[sc.id];
+  const fade = Math.min(cl(lt / 0.4), cl((sc.dur - lt) / 0.4));
+  document.getElementById('root').innerHTML =
+    `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect width="1920" height="1080" fill="${C.ground}"/>` +
+    `<g opacity="${fade}">${header(meta, sc.id)}${DRAW[sc.id](p, lt)}${chipsRow(meta, p)}</g></svg>`;
+};
+
+// Standalone preview: ?t=seconds with a nominal 10 s per scene.
+if (!window.__BUILD__) {
+  setTimes(Object.keys(SCENES).map((id, i) => ({ id, start: i * 10, dur: 10 })));
+  frame(Number(new URLSearchParams(location.search).get('t') || 0));
+}
+</script>
+</body>
+</html>

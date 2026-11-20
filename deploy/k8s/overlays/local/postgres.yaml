@@ -1,0 +1,120 @@
+# LOCAL TEST ONLY. One PostgreSQL 17 pod with a volume: no replica, no PITR, no encryption at rest.
+# Roles as docs/API.md §3.9.1 describes: gate_owner owns the database and runs the schema (gate-migrate Job),
+# gate_app is the service role (not a superuser, owns nothing), gate_backup only reads (BYPASSRLS, required by pg_dump
+# on tables with forced row-level security). Passwords come from the Secret gate-postgres (new-tenant.sh).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+data:
+  10-gate-roles.sh: |
+    # psql reads the passwords from the environment (\getenv): they never appear in a command line
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<'SQL'
+    \getenv owner_password GATE_OWNER_PASSWORD
+    \getenv app_password GATE_APP_PASSWORD
+    \getenv backup_password GATE_BACKUP_PASSWORD
+    CREATE ROLE gate_owner LOGIN CREATEDB PASSWORD :'owner_password';
+    CREATE ROLE gate_app LOGIN PASSWORD :'app_password';
+    CREATE ROLE gate_backup LOGIN BYPASSRLS PASSWORD :'backup_password';
+    ALTER DATABASE gate OWNER TO gate_owner;
+    REVOKE ALL ON DATABASE gate FROM PUBLIC;
+    GRANT CONNECT ON DATABASE gate TO gate_app, gate_backup;
+    SQL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels: {app.kubernetes.io/name: postgres}
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: postgres}
+  ports:
+    - {name: postgres, port: 5432, targetPort: 5432}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels: {app.kubernetes.io/name: postgres}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: postgres}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: postgres}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70 # postgres in the alpine image
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          imagePullPolicy: Never
+          # server-side keepalive: a Qadamar node that vanishes without closing its socket (node loss) releases the
+          # leader lock within about 25 s instead of the kernel's default two hours
+          args: ["-c", "tcp_keepalives_idle=10", "-c", "tcp_keepalives_interval=5", "-c", "tcp_keepalives_count=3",
+            "-c", "ssl=on", "-c", "ssl_cert_file=/etc/postgres/tls/tls.crt", "-c", "ssl_key_file=/etc/postgres/tls/tls.key"]
+          env:
+            - {name: POSTGRES_DB, value: gate}
+            - {name: POSTGRES_USER, value: postgres}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+            - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: gate-postgres, key: POSTGRES_PASSWORD}}}
+            - {name: GATE_OWNER_PASSWORD, valueFrom: {secretKeyRef: {name: gate-postgres, key: GATE_OWNER_PASSWORD}}}
+            - {name: GATE_APP_PASSWORD, valueFrom: {secretKeyRef: {name: gate-postgres, key: GATE_APP_PASSWORD}}}
+            - {name: GATE_BACKUP_PASSWORD, valueFrom: {secretKeyRef: {name: gate-postgres, key: GATE_BACKUP_PASSWORD}}}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          readinessProbe:
+            exec: {command: ["pg_isready", "-h", "127.0.0.1", "-U", "postgres"]}
+            periodSeconds: 2
+          livenessProbe:
+            exec: {command: ["pg_isready", "-h", "127.0.0.1", "-U", "postgres"]}
+            periodSeconds: 10
+            failureThreshold: 6
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: run, mountPath: /var/run/postgresql}
+            - {name: tmp, mountPath: /tmp}
+            - {name: init, mountPath: /docker-entrypoint-initdb.d, readOnly: true}
+            - {name: tls, mountPath: /etc/postgres/tls, readOnly: true}
+      volumes:
+        - {name: run, emptyDir: {medium: Memory, sizeLimit: 8Mi}}
+        - {name: tmp, emptyDir: {sizeLimit: 64Mi}}
+        - {name: init, configMap: {name: postgres-init}}
+        - {name: tls, secret: {secretName: gate-postgres-server, defaultMode: 0440}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 2Gi}}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-ingress
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: postgres}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: gate}
+      ports:
+        - {port: 5432, protocol: TCP}

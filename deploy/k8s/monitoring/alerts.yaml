@@ -1,0 +1,158 @@
+# Assumptions (PARAMETERS of the monitoring stack, docs/MANAGED-OFFER.md §8):
+# - Qadamar pods are scraped through their prometheus.io annotations with the bearer METRICS_TOKEN, and the scrape job
+#   copies the pod's namespace and pod name into the labels namespace and pod;
+# - kube-state-metrics runs (kube_* series);
+# - the ingress controller is ingress-nginx (nginx_ingress_controller_requests); adapt GateHigh5xxRate otherwise.
+# The standby opens no port: its scrape fails (up == 0) by design, so no rule alerts on a single failed scrape.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: qadamar
+  labels:
+    app.kubernetes.io/part-of: qadamar
+spec:
+  groups:
+    - name: gate-availability
+      rules:
+        - alert: GateNoActiveNode
+          # nobody holds the lock and serves (active/standby), or no node is Ready (cluster mode, StatefulSet gate-0..n):
+          # every PEP decision fails closed. Pod names: gate-<hash>-<id> or gate-<n>, never the replicas gate-replica-<n>.
+          expr: |
+            (sum by (namespace) (kube_deployment_status_replicas_ready{deployment="gate", namespace=~"gate-.*"}) < 1)
+            or (sum by (namespace) (kube_statefulset_status_replicas_ready{statefulset="gate", namespace=~"gate-.*"}) < 1)
+            or (sum by (namespace) (up{namespace=~"gate-.*", pod=~"gate-[0-9]+|gate-[a-z0-9]+-[a-z0-9]+", pod!~"gate-replica-.*"}) < 1)
+          for: 1m
+          labels: {severity: critical}
+          annotations:
+            summary: "No active Qadamar node in {{ $labels.namespace }}"
+            description: "No pod of the tenant is Ready, or none answers its metrics scrape. PEPs get errors and must deny. Check the pods, PostgreSQL reachability and the node logs (Storage failure, Audit integrity failure)."
+        - alert: GateActiveNodeNotReady
+          # the node holding the lock answers but /readyz fails: the audit chain no longer verifies (tampering or a
+          # metadata mismatch) or commits fail. There is no dedicated gauge yet: inferred from metrics + readiness.
+          expr: |
+            (max by (namespace) (gate_active_node{namespace=~"gate-.*"}) == 1)
+            and on (namespace) (sum by (namespace) (kube_pod_status_ready{condition="true", namespace=~"gate-.*", pod=~"gate-[0-9]+|gate-[a-z0-9]+-[a-z0-9]+", pod!~"gate-replica-.*"}) == 0)
+          for: 2m
+          labels: {severity: critical}
+          annotations:
+            summary: "Qadamar active node in {{ $labels.namespace }} is not ready: audit chain unverified or commits failing"
+            description: "Sign in as an auditor and call GET /admin/v1/audit/verify; read the node log for 'Audit integrity failure' or 'Readiness check failed'. Treat a broken chain as a security incident: do not restore over it before preserving the database."
+        - alert: GateFailover
+          # more than one pod was the active node within 15 minutes: a failover or a restart happened
+          expr: count by (namespace) (max_over_time(gate_active_node{namespace=~"gate-.*"}[15m]) == 1) > 1
+          labels: {severity: warning}
+          annotations:
+            summary: "Qadamar failover in {{ $labels.namespace }}"
+            description: "The active role moved to another pod. Expected during upgrades and drains; otherwise read the previous pod's logs (fail-stop on a storage error exits the process)."
+    - name: gate-integrity
+      rules:
+        - alert: GateAuditFullChainUnverified
+          # PARAMETER: longer than one full recheck of the log takes (about 9 s per million rows on a laptop). After a
+          # start from the checkpoint the whole chain is verified in the background; 0 that lasts means it is still
+          # running on a very large log, or it found a rewritten row (then GateActiveNodeNotReady fires too).
+          expr: gate_audit_full_chain_verified{namespace=~"gate-.*"} == 0
+          for: 15m
+          labels: {severity: warning}
+          annotations:
+            summary: "Qadamar audit chain of {{ $labels.pod }} in {{ $labels.namespace }} not verified from its genesis"
+            description: "Read the node log for 'Audit background verification complete' or 'AUDIT INTEGRITY FAILURE'; sign in as an auditor and call GET /admin/v1/audit/verify (fullChain). A failure is a security incident: follow docs/handbook/operations/audit-tamper-response.md."
+        - alert: GateReplicaAuditRefused
+          # a database node refused a replica's audit batch: tampering, a fork, a gap, or a replica behind its stored
+          # chain (a lost disk). The replica stops deciding; the refusal is a row of the database node's own chain.
+          expr: increase(gate_replica_audit_refused_total{namespace=~"gate-.*"}[10m]) > 0 or gate_replica_audit_refused{namespace=~"gate-.*"} == 1
+          labels: {severity: critical}
+          annotations:
+            summary: "Qadamar refused a replica audit chain in {{ $labels.namespace }}"
+            description: "Search the database node's audit for security/replica_audit_refused (replica, reason) and its log for 'REPLICA AUDIT REFUSED'. Preserve the replica's DATA_DIR. A replica whose disk was lost restarts with a new GATE_NODE_ID (docs/API.md §3.9.5)."
+        - alert: GateReplicaAuditLagging
+          # PARAMETER: below GATE_REPLICA_AUDIT_LAG_MS (10 s), at which the replica refuses decisions
+          expr: gate_replica_audit_lag_seconds{namespace=~"gate-.*"} > 5
+          for: 1m
+          labels: {severity: warning}
+          annotations:
+            summary: "Replica {{ $labels.pod }} in {{ $labels.namespace }} cannot ship its audit"
+            description: "Durable audit rows wait on the replica's disk only: a lost disk would lose them. Check that the replica reaches GATE_REPLICA_OF and the database nodes' logs ('Replica audit ingestion failed')."
+        - alert: GateAnchoringStale
+          # PARAMETER: 2 x ANCHOR_INTERVAL (default 3600 s). -1 means no anchor yet while the audit grows.
+          expr: |
+            (gate_audit_last_anchor_age_seconds{namespace=~"gate-.*"} > 7200)
+            or ((gate_audit_last_anchor_age_seconds{namespace=~"gate-.*"} == -1) and (gate_audit_length{namespace=~"gate-.*"} > 0))
+          for: 15m
+          labels: {severity: warning}
+          annotations:
+            summary: "Audit anchoring stale in {{ $labels.namespace }}"
+            description: "No RFC 3161 anchor of the audit head for over two intervals. Check the TSA reachability (NetworkPolicy gate-egress-idp-tsa) and GET /admin/v1/audit/anchors lastError; a lastError about the chain is an integrity incident."
+        - alert: GateBackupMissing
+          # PARAMETER: 26 h for a daily schedule
+          expr: |
+            (time() - max by (namespace) (kube_cronjob_status_last_successful_time{cronjob="gate-backup", namespace=~"gate-.*"}) > 93600)
+            or (max by (namespace) (kube_job_status_failed{job_name=~"gate-backup-.*", namespace=~"gate-.*"}) > 0)
+          for: 10m
+          labels: {severity: warning}
+          annotations:
+            summary: "No successful Qadamar backup in {{ $labels.namespace }} for over 26 h, or a backup job failed"
+            description: "Read the last gate-backup job's log (validation of the archive, database reachability, volume space)."
+    - name: gate-performance
+      rules:
+        - alert: GateCommitLatencyHigh
+          # PARAMETER: 250 ms p99; every decision waits for its commit
+          expr: |
+            histogram_quantile(0.99, sum by (namespace, le) (rate(gate_commit_duration_seconds_bucket{namespace=~"gate-.*"}[5m]))) > 0.25
+          for: 10m
+          labels: {severity: warning}
+          annotations:
+            summary: "Qadamar commit p99 above 250 ms in {{ $labels.namespace }}"
+            description: "Decisions are slow because PostgreSQL commits are. Check the database (CPU, IO, locks, failover in progress) and network latency to it."
+        - alert: GateHigh5xxRate
+          # PARAMETER: 2 % of requests over 5 minutes, seen at the ingress (Qadamar's own metrics carry no status code)
+          expr: |
+            sum by (exported_namespace) (rate(nginx_ingress_controller_requests{exported_namespace=~"gate-.*", status=~"5.."}[5m]))
+            / sum by (exported_namespace) (rate(nginx_ingress_controller_requests{exported_namespace=~"gate-.*"}[5m])) > 0.02
+          for: 5m
+          labels: {severity: critical}
+          annotations:
+            summary: "Qadamar 5xx rate above 2 % in {{ $labels.exported_namespace }}"
+            description: "503 during a failover is expected for seconds; sustained 5xx means no active node, a fail-stopped node or an integrity latch. Check GateNoActiveNode and the node logs."
+    # Service level indicators of docs/MANAGED-OFFER.md §10. The objectives are a PROPOSAL (TO DECIDE by the owner):
+    # these thresholds alert on the proposed targets and change with them.
+    - name: gate-slo
+      rules:
+        - alert: GateDecisionLatencyHigh
+          # PARAMETER (TO DECIDE): p99 of the decision routes under 250 ms, measured at the node (body parsed to answer
+          # sent), so it includes the commit of the audit row the answer waits for
+          expr: |
+            histogram_quantile(0.99, sum by (namespace, le) (rate(gate_http_request_duration_seconds_bucket{namespace=~"gate-.*", route=~"evaluation|evaluations|search|xacml|tokens"}[5m]))) > 0.25
+          for: 10m
+          labels: {severity: warning}
+          annotations:
+            summary: "Qadamar decision p99 above 250 ms in {{ $labels.namespace }}"
+            description: "Compare with GateCommitLatencyHigh (database) and the pods' CPU throttling; batches of up to 1,000 evaluations count as one request and are slower by design."
+        - alert: GateAvailabilityBudgetBurn
+          # PARAMETER (TO DECIDE): a 99.9 % monthly objective has a 0.1 % error budget; a burn rate of 14.4 spends 2 % of
+          # it in one hour. Both windows must agree, so a short spike alone does not page. 5xx seen at the ingress.
+          expr: |
+            (sum by (exported_namespace) (rate(nginx_ingress_controller_requests{exported_namespace=~"gate-.*", status=~"5.."}[1h]))
+              / sum by (exported_namespace) (rate(nginx_ingress_controller_requests{exported_namespace=~"gate-.*"}[1h])) > (14.4 * 0.001))
+            and
+            (sum by (exported_namespace) (rate(nginx_ingress_controller_requests{exported_namespace=~"gate-.*", status=~"5.."}[5m]))
+              / sum by (exported_namespace) (rate(nginx_ingress_controller_requests{exported_namespace=~"gate-.*"}[5m])) > (14.4 * 0.001))
+          for: 2m
+          labels: {severity: critical}
+          annotations:
+            summary: "Qadamar error budget burning fast in {{ $labels.exported_namespace }}"
+            description: "At this rate the proposed monthly availability objective is spent in about two days. Check GateNoActiveNode, GateActiveNodeNotReady and the node logs."
+        - alert: GateReplicaStale
+          # GATE_MAX_STALENESS_MS (default 2000): past it the replica refuses decisions (503); -1 = never confirmed
+          expr: (gate_replica_state_age_seconds{namespace=~"gate-.*"} > 2) or (gate_replica_state_age_seconds{namespace=~"gate-.*"} == -1)
+          for: 1m
+          labels: {severity: warning}
+          annotations:
+            summary: "Replica {{ $labels.pod }} in {{ $labels.namespace }} has not confirmed the shared state for over 2 s"
+            description: "It answers 503 instead of deciding. Check that it reaches GATE_REPLICA_OF (NetworkPolicy gate-replica, TLS CA) and the Qadamar pods' logs."
+        - alert: GateBreakGlassNoticeFailed
+          # a signed break-glass notice was given up after its retries: the customer's SOC did not hear of an emergency
+          expr: increase(gate_break_glass_notices_total{namespace=~"gate-.*", outcome="failed"}[15m]) > 0
+          labels: {severity: warning}
+          annotations:
+            summary: "Break-glass notice not delivered in {{ $labels.namespace }}"
+            description: "The audit has a notify_failed row. Check the receiver (BREAK_GLASS_WEBHOOK) and NetworkPolicy gate-egress-idp-tsa; tell the customer's security officer directly."

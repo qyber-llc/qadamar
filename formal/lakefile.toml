@@ -1,0 +1,11 @@
+name = "gate"
+version = "0.1.0"
+defaultTargets = ["Qadamar", "gate-model"]
+
+# Core Lean 4 only: no Mathlib, no external package.
+[[lean_lib]]
+name = "Qadamar"
+
+[[lean_exe]]
+name = "gate-model"
+root = "Main"

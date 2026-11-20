@@ -1,0 +1,460 @@
+{
+  "demo": true,
+  "_note": "Fictional agency. Every person, team, case and payment here is invented for the demo. lina and omar are the console's security officer and approver: they hold no role, so they may certify Clark-Wilson procedures (a certifier must not be able to execute them) and execute nothing.",
+  "now": "2026-11-08T10:00:00Z",
+  "subjects": [
+    {
+      "type": "user",
+      "id": "alice",
+      "active": true,
+      "roles": [
+        "case_lead"
+      ],
+      "clearance": 3,
+      "compartments": [
+        "ORCHID"
+      ],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Alice",
+        "unit": "Field operations"
+      }
+    },
+    {
+      "type": "user",
+      "id": "bob",
+      "active": true,
+      "roles": [
+        "investigator"
+      ],
+      "clearance": 2,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Bob",
+        "unit": "Investigations"
+      }
+    },
+    {
+      "type": "user",
+      "id": "carol",
+      "active": true,
+      "roles": [
+        "case_lead"
+      ],
+      "clearance": 3,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Carol",
+        "unit": "Investigations"
+      }
+    },
+    {
+      "type": "user",
+      "id": "dan",
+      "active": true,
+      "roles": [
+        "security_officer"
+      ],
+      "clearance": 3,
+      "compartments": [
+        "FALCON"
+      ],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Dan",
+        "unit": "Security office"
+      }
+    },
+    {
+      "type": "user",
+      "id": "eve",
+      "active": true,
+      "roles": [
+        "auditor"
+      ],
+      "clearance": 1,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Eve",
+        "unit": "Internal audit"
+      }
+    },
+    {
+      "type": "user",
+      "id": "frank",
+      "active": false,
+      "roles": [
+        "investigator"
+      ],
+      "clearance": 2,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Frank",
+        "unit": "Investigations (left)"
+      }
+    },
+    {
+      "type": "user",
+      "id": "grace",
+      "active": true,
+      "roles": [
+        "finance_clerk"
+      ],
+      "clearance": 1,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Grace",
+        "unit": "Finance"
+      }
+    },
+    {
+      "type": "user",
+      "id": "henry",
+      "active": true,
+      "roles": [
+        "finance_approver"
+      ],
+      "clearance": 1,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Henry",
+        "unit": "Finance"
+      }
+    },
+    {
+      "type": "user",
+      "id": "iris",
+      "active": true,
+      "roles": [
+        "declassifier"
+      ],
+      "clearance": 3,
+      "compartments": [
+        "ORCHID"
+      ],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Iris",
+        "unit": "Records office"
+      }
+    },
+    {
+      "type": "user",
+      "id": "lina",
+      "active": true,
+      "roles": [],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Lina",
+        "unit": "Security office"
+      }
+    },
+    {
+      "type": "user",
+      "id": "omar",
+      "active": true,
+      "roles": [],
+      "clearance": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "attrs": {
+        "name": "Omar",
+        "unit": "Access governance"
+      }
+    },
+    {
+      "type": "agent",
+      "id": "assistant-1",
+      "active": true,
+      "roles": [
+        "investigator"
+      ],
+      "clearance": 2,
+      "compartments": [],
+      "integrity": "derived",
+      "attrs": {
+        "name": "Assistant-1",
+        "delegatedBy": "bob"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "type": "case",
+      "id": "CASE-7",
+      "level": 3,
+      "compartments": [
+        "ORCHID"
+      ],
+      "integrity": "verified",
+      "owner": "alice",
+      "version": 12,
+      "attrs": {
+        "title": "Harbour surveillance",
+        "status": "open"
+      },
+      "contentClasses": []
+    },
+    {
+      "type": "case",
+      "id": "CASE-11",
+      "level": 1,
+      "compartments": [],
+      "integrity": "system",
+      "owner": "carol",
+      "version": 3,
+      "parent": {
+        "type": "folder",
+        "id": "FOLDER-A"
+      },
+      "attrs": {
+        "title": "Supplier vetting",
+        "status": "open"
+      },
+      "contentClasses": []
+    },
+    {
+      "type": "case",
+      "id": "CASE-12",
+      "level": 3,
+      "compartments": [
+        "FALCON"
+      ],
+      "integrity": "verified",
+      "owner": "dan",
+      "version": 5,
+      "attrs": {
+        "title": "Network intrusion",
+        "status": "open"
+      },
+      "contentClasses": []
+    },
+    {
+      "type": "case",
+      "id": "CASE-14",
+      "level": 2,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "carol",
+      "version": 8,
+      "contentClasses": [
+        "finance.amount"
+      ],
+      "attrs": {
+        "title": "Procurement irregularities",
+        "status": "open"
+      }
+    },
+    {
+      "type": "case",
+      "id": "CASE-15",
+      "level": 2,
+      "compartments": [],
+      "integrity": "derived",
+      "owner": "carol",
+      "version": 2,
+      "contentClasses": [
+        "pii.iban"
+      ],
+      "attrs": {
+        "title": "Draft summary (machine generated)",
+        "status": "open"
+      }
+    },
+    {
+      "type": "case",
+      "id": "CASE-18",
+      "level": 0,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "carol",
+      "version": 1,
+      "attrs": {
+        "title": "Public guidance",
+        "status": "closed"
+      },
+      "contentClasses": []
+    },
+    {
+      "type": "folder",
+      "id": "FOLDER-A",
+      "level": 1,
+      "compartments": [],
+      "integrity": "system",
+      "owner": "carol",
+      "version": 1,
+      "attrs": {
+        "title": "Vetting folder"
+      },
+      "contentClasses": []
+    },
+    {
+      "type": "payment",
+      "id": "PAY-3",
+      "level": 1,
+      "compartments": [],
+      "integrity": "verified",
+      "owner": "grace",
+      "version": 4,
+      "attrs": {
+        "title": "Forensics contractor invoice",
+        "status": "pending",
+        "makerId": "grace"
+      },
+      "contentClasses": []
+    }
+  ],
+  "tuples": [
+    {
+      "object": {
+        "type": "team",
+        "id": "orchid"
+      },
+      "relation": "member",
+      "subject": {
+        "type": "user",
+        "id": "alice"
+      }
+    },
+    {
+      "object": {
+        "type": "team",
+        "id": "orchid"
+      },
+      "relation": "member",
+      "subject": {
+        "type": "user",
+        "id": "iris"
+      }
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-7"
+      },
+      "relation": "member",
+      "subject": {
+        "type": "team",
+        "id": "orchid"
+      },
+      "subjectRelation": "member"
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-14"
+      },
+      "relation": "allocated",
+      "subject": {
+        "type": "user",
+        "id": "bob"
+      },
+      "validFrom": "2026-09-01T00:00:00Z",
+      "validTo": "2026-12-31T23:59:59Z",
+      "grantedBy": "carol",
+      "reason": "Lead investigator"
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-14"
+      },
+      "relation": "delegate",
+      "subject": {
+        "type": "agent",
+        "id": "assistant-1"
+      },
+      "validFrom": "2026-11-01T00:00:00Z",
+      "validTo": "2026-12-31T23:59:59Z",
+      "grantedBy": "bob",
+      "reason": "Drafting support"
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-15"
+      },
+      "relation": "allocated",
+      "subject": {
+        "type": "user",
+        "id": "bob"
+      },
+      "validFrom": "2026-03-01T00:00:00Z",
+      "validTo": "2026-06-30T23:59:59Z",
+      "grantedBy": "carol",
+      "reason": "Ended allocation"
+    },
+    {
+      "object": {
+        "type": "user",
+        "id": "bob"
+      },
+      "relation": "manager",
+      "subject": {
+        "type": "user",
+        "id": "carol"
+      }
+    },
+    {
+      "object": {
+        "type": "folder",
+        "id": "FOLDER-A"
+      },
+      "relation": "member",
+      "subject": {
+        "type": "user",
+        "id": "bob"
+      }
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-11"
+      },
+      "relation": "parent",
+      "subject": {
+        "type": "folder",
+        "id": "FOLDER-A"
+      }
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-12"
+      },
+      "relation": "granted",
+      "subject": {
+        "type": "user",
+        "id": "dan"
+      },
+      "breakGlass": true,
+      "validFrom": "2026-11-08T09:00:00Z",
+      "validTo": "2026-11-08T13:00:00Z",
+      "grantedBy": "lina",
+      "reason": "Incident 4471: active intrusion, owner unreachable"
+    },
+    {
+      "object": {
+        "type": "case",
+        "id": "CASE-15"
+      },
+      "relation": "granted",
+      "subject": {
+        "type": "user",
+        "id": "eve"
+      },
+      "validFrom": "2026-11-01T00:00:00Z",
+      "validTo": "2027-01-31T00:00:00Z",
+      "grantedBy": "carol",
+      "reason": "Quarterly audit sample"
+    }
+  ]
+}

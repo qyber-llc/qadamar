@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qadamar.example/spec/policy-bundle/1.0/schema.json",
+  "title": "Qadamar policy bundle, language version 1.0",
+  "description": "Structural rules of docs/spec/POLICY-LANGUAGE.md. Referential rules (declared types, actions, roles, relations), role cycles, condition depth and unique rule ids are checked by validateBundle only (POLICY-LANGUAGE.md section 9). packages/core/test/spec.test.ts checks this schema against validateBundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "schema", "rbac", "mandatory", "needToKnow", "clarkWilson"],
+  "not": { "required": ["cbac", "abacContent"] },
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceTypes", "compartments"],
+      "properties": {
+        "resourceTypes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/resourceType" } },
+        "subjectRelations": { "type": "object", "additionalProperties": { "$ref": "#/$defs/relations" } },
+        "compartments": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "rbac": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roles"],
+      "properties": {
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["grants"],
+            "properties": {
+              "inherits": { "$ref": "#/$defs/strings" },
+              "grants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["resourceType", "actions"],
+                  "properties": { "resourceType": { "type": "string" }, "actions": { "$ref": "#/$defs/strings" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mandatory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trustedRoles", "untrustedNetworkMaxLevel", "compartmentsRequireTrustedNetwork", "bibaNoReadDownActions"],
+      "properties": {
+        "trustedRoles": { "$ref": "#/$defs/strings" },
+        "untrustedNetworkMaxLevel": { "$ref": "#/$defs/level" },
+        "compartmentsRequireTrustedNetwork": { "type": "boolean" },
+        "bibaNoReadDownActions": { "$ref": "#/$defs/strings" },
+        "bibaNoReadDownScope": { "enum": ["actions", "reads", "all"] }
+      }
+    },
+    "needToKnow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "protect", "breakGlassMaxHours", "breakGlassNotify"],
+      "properties": {
+        "mode": { "enum": ["off", "dry_run", "enforce"] },
+        "protect": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["relation"],
+            "properties": { "relation": { "type": "string" }, "minLevel": { "$ref": "#/$defs/level" } }
+          }
+        },
+        "breakGlassMaxHours": { "type": "number", "exclusiveMinimum": 0, "maximum": 24 },
+        "breakGlassNotify": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "abac": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "effect", "when"],
+        "properties": {
+          "id": { "$ref": "#/$defs/ruleId", "not": { "pattern": "^CONTENT_" } },
+          "description": { "type": "string" },
+          "effect": { "enum": ["permit", "forbid", "obligation"] },
+          "resourceTypes": { "$ref": "#/$defs/scope" },
+          "actions": { "$ref": "#/$defs/scope" },
+          "when": { "$ref": "#/$defs/expr" },
+          "obligations": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "fieldAllowlist": { "$ref": "#/$defs/strings" },
+              "redact": { "$ref": "#/$defs/strings" },
+              "maskClasses": { "$ref": "#/$defs/strings" },
+              "notify": { "$ref": "#/$defs/strings" }
+            }
+          }
+        }
+      }
+    },
+    "abacContent": { "description": "ABAC on content attributes (mask, redact, deny).", "$ref": "#/$defs/contentRules" },
+    "cbac": { "description": "Deprecated: the legacy name of abacContent, read as abacContent for one version (warning DEPRECATED_CBAC_FIELD).", "$ref": "#/$defs/contentRules" },
+    "context": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/contextRule" }
+    },
+    "sod": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "conflicting"],
+        "properties": {
+          "id": { "$ref": "#/$defs/ruleId" },
+          "description": { "type": "string" },
+          "conflicting": { "$ref": "#/$defs/strings", "minItems": 2 }
+        }
+      }
+    },
+    "clarkWilson": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokenTtlSeconds"],
+      "properties": {
+        "tokenTtlSeconds": { "type": "number", "exclusiveMinimum": 0, "maximum": 300 },
+        "ivps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description", "resourceTypes", "check"],
+            "properties": {
+              "id": { "$ref": "#/$defs/ruleId" },
+              "description": { "type": "string", "minLength": 1 },
+              "resourceTypes": { "$ref": "#/$defs/scope" },
+              "check": { "$ref": "#/$defs/expr" }
+            }
+          }
+        },
+        "requireCertification": { "$ref": "#/$defs/strings" },
+        "requirePepBinding": { "$ref": "#/$defs/strings" },
+        "inputValidators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description", "resourceTypes", "actions", "fields"],
+            "properties": {
+              "id": { "$ref": "#/$defs/ruleId" },
+              "description": { "type": "string", "minLength": 1 },
+              "resourceTypes": { "$ref": "#/$defs/scope" },
+              "actions": { "$ref": "#/$defs/scope" },
+              "fields": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/inputField" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "contentRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "contentClass", "effect"],
+        "properties": {
+          "id": { "$ref": "#/$defs/ruleId" },
+          "description": { "type": "string" },
+          "contentClass": { "type": "string", "minLength": 1 },
+          "effect": { "enum": ["deny", "mask", "redact"] },
+          "fields": { "$ref": "#/$defs/strings" },
+          "actions": { "$ref": "#/$defs/scope" },
+          "unless": { "$ref": "#/$defs/expr" }
+        },
+        "if": { "properties": { "effect": { "const": "redact" } } },
+        "then": { "required": ["fields"], "properties": { "fields": { "minItems": 1 } } }
+      }
+    },
+    "strings": { "type": "array", "items": { "type": "string" } },
+    "scope": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "level": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "ruleId": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
+    "resourceType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actions"],
+      "properties": {
+        "actions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind"],
+            "properties": {
+              "kind": { "enum": ["read", "write", "delete", "approve", "execute"] },
+              "certified": { "type": "boolean" },
+              "requiresSecondPerson": { "type": "boolean" }
+            }
+          }
+        },
+        "relations": { "$ref": "#/$defs/relations" },
+        "constrained": { "type": "boolean" },
+        "governedAttributes": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" } }
+      }
+    },
+    "relations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["union"],
+        "properties": { "union": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/rewrite" } } }
+      }
+    },
+    "rewrite": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["this"], "properties": { "this": { "const": true } } },
+        { "type": "object", "additionalProperties": false, "required": ["computed"], "properties": { "computed": { "type": "string" } } },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fromParent"],
+          "properties": {
+            "fromParent": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["relation", "then"],
+              "properties": { "relation": { "type": "string" }, "then": { "type": "string" } }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["viaReports"],
+          "properties": {
+            "viaReports": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["managerRelation", "then", "maxDepth"],
+              "properties": {
+                "managerRelation": { "type": "string" },
+                "then": { "type": "string" },
+                "maxDepth": { "type": "integer", "minimum": 1, "maximum": 50 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "contextRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/ruleId" },
+        "description": { "type": "string", "maxLength": 1024 },
+        "resourceTypes": { "$ref": "#/$defs/scope" },
+        "actions": { "$ref": "#/$defs/scope" },
+        "actionKinds": { "type": "array", "minItems": 1, "items": { "enum": ["read", "write", "delete", "approve", "execute"] } },
+        "minResourceLevel": { "$ref": "#/$defs/level" },
+        "contentClasses": { "$ref": "#/$defs/scope", "maxItems": 100 },
+        "network": { "const": "trusted" },
+        "countries": { "type": "array", "minItems": 1, "maxItems": 249, "items": { "type": "string", "pattern": "^[A-Z]{2}$" } },
+        "ipRanges": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "type": "string", "maxLength": 64 } },
+        "timeWindows": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/$defs/timeWindow" } },
+        "device": {
+          "type": "object", "additionalProperties": false, "minProperties": 1,
+          "properties": { "managed": { "type": "boolean" }, "compliant": { "type": "boolean" } }
+        },
+        "mfaMaxAgeSeconds": { "type": "integer", "minimum": 0, "maximum": 31536000 },
+        "authMaxAgeSeconds": { "type": "integer", "minimum": 0, "maximum": 31536000 },
+        "authMethodsAny": { "type": "array", "minItems": 1, "maxItems": 16, "items": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,32}$" } },
+        "maxRiskScore": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "timeWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["days", "from", "to", "timeZone"],
+      "properties": {
+        "days": { "type": "array", "minItems": 1, "maxItems": 7, "items": { "type": "integer", "minimum": 1, "maximum": 7 } },
+        "from": { "type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$" },
+        "to": { "type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$" },
+        "timeZone": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "inputField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["string", "number", "integer", "boolean"] },
+        "required": { "type": "boolean" },
+        "enum": { "type": "array", "minItems": 1, "items": { "type": ["string", "number", "boolean"] } },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "maxLength": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "path": { "type": "string", "pattern": "^(subject|resource|action|context)\\." },
+    "operand": {
+      "oneOf": [
+        { "type": "object", "required": ["path"], "properties": { "path": { "$ref": "#/$defs/path" } } },
+        { "type": "object", "required": ["value"], "not": { "required": ["path"] } }
+      ]
+    },
+    "expr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["op", "left", "right"],
+          "properties": {
+            "op": { "enum": ["eq", "ne", "lt", "le", "gt", "ge", "in", "contains", "subset"] },
+            "left": { "$ref": "#/$defs/operand" },
+            "right": { "$ref": "#/$defs/operand" }
+          }
+        },
+        { "type": "object", "required": ["op", "path"], "properties": { "op": { "const": "has" }, "path": { "$ref": "#/$defs/path" } } },
+        {
+          "type": "object",
+          "required": ["op", "args"],
+          "properties": { "op": { "enum": ["and", "or"] }, "args": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/expr" } } }
+        },
+        { "type": "object", "required": ["op", "arg"], "properties": { "op": { "const": "not" }, "arg": { "$ref": "#/$defs/expr" } } },
+        { "type": "object", "required": ["op"], "properties": { "op": { "const": "true" } } }
+      ]
+    }
+  }
+}

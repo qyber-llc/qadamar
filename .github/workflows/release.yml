@@ -1,0 +1,208 @@
+# Release on a v* tag, on the same runner as CI (repository variable CI_RUNNER, docs/CI.md): the whole CI gate, a socketless
+# image scan with read-only permissions, then the tarball, SBOM and SHA256SUMS of scripts/release/pack.sh attached to a
+# GitHub release. Needs the gh CLI on the runner (GitHub-hosted Ubuntu has it; the self-hosted Mac needs `brew install gh`).
+# Signing: vars.RELEASE_SIGNING_HOOK = scripts/release/sign-ssh.sh (owner decision 2026-11-17); unset = unsigned. See docs/RELEASE.md.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+# read by default; only the release job, which creates the GitHub release, may write
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Release gate, as in ci.yml: the Lean 4 model of the decision core (formal/, docs/spec/FORMAL-MODEL.md), proofs
+  # checked (no sorry, standard axioms only), then evaluate tested against the executable model. Its own job with a
+  # read-only token: the third-party toolchain it downloads and runs never shares a job with contents: write.
+  formal:
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+      - name: macOS paths
+        if: runner.os == 'macOS'
+        run: |
+          echo /Applications/Docker.app/Contents/Resources/bin >> "$GITHUB_PATH"
+          echo /opt/homebrew/bin >> "$GITHUB_PATH"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Lean toolchain (elan and Lean, each pinned by version and SHA-256)
+        # a release never reuses a toolchain a persistent runner kept from an earlier (pull request) job
+        run: |
+          echo "ELAN_HOME=$RUNNER_TEMP/elan" >> "$GITHUB_ENV"
+          ELAN_HOME="$RUNNER_TEMP/elan" bash tools/ci/install-lean.sh
+      - name: Formal model (lake build, proofs checked, no sorry)
+        run: bash formal/check.sh
+      - name: Differential test, TypeScript evaluate against the Lean model
+        env:
+          LEAN_REQUIRED: '1'
+          LEAN_DIFF_RUNS: '10000'
+        run: node --test packages/core/test/lean-differential.test.ts
+  test:
+    needs: formal
+    permissions:
+      contents: read
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+      - name: macOS paths
+        if: runner.os == 'macOS'
+        run: |
+          echo /Applications/Docker.app/Contents/Resources/bin >> "$GITHUB_PATH"
+          echo /opt/homebrew/bin >> "$GITHUB_PATH"
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Secret scan (gitleaks, full history)
+        run: |
+          bash tools/ci/install-gitleaks.sh
+          gitleaks git --no-banner --redact .
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Dependency vulnerability scan (production dependencies, high and critical block)
+        run: pnpm audit --prod --audit-level high
+      # same SAST step as ci.yml (docs/CI.md)
+      - name: SAST (Semgrep, ERROR findings block)
+        env:
+          SEMGREP_IMAGE: semgrep/semgrep:1.95.0@sha256:30e6afa99ebd8e7b4115d4904898108eb4bf77025819e9263f09cf14e6f6e549
+        run: >-
+          docker run --rm -v "$PWD:/src" -w /src "$SEMGREP_IMAGE"
+          semgrep scan --metrics off --disable-version-check
+          --config p/javascript --config p/typescript --config p/nodejsscan
+          --severity ERROR --error
+      - name: Throwaway PostgreSQL
+        env:
+          CI_DB_KEY: release-${{ github.run_id }}-${{ github.run_attempt }}
+        run: bash tools/ci/postgres.sh start
+      - name: Provide pinned Playwright and Chromium (read-only token)
+        env:
+          CI_CHROMIUM_SHA256: ${{ vars.CI_CHROMIUM_SHA256 }}
+        run: node tools/ci/install-playwright.ts
+      - name: CI gate
+        run: bash tools/ci/checks.sh
+      - name: Remove the throwaway PostgreSQL
+        if: always()
+        env:
+          CI_DB_KEY: release-${{ github.run_id }}-${{ github.run_attempt }}
+        run: bash tools/ci/postgres.sh stop
+
+  image-scan:
+    needs: [formal, test]
+    permissions:
+      contents: read
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+      - name: macOS paths
+        if: runner.os == 'macOS'
+        run: |
+          echo /Applications/Docker.app/Contents/Resources/bin >> "$GITHUB_PATH"
+          echo /opt/homebrew/bin >> "$GITHUB_PATH"
+      - name: Build release image
+        run: docker build --tag "gate-release:${GITHUB_SHA}" .
+      - name: Export release image
+        run: docker save --output gate-release.tar "gate-release:${GITHUB_SHA}"
+      - name: Container vulnerability scan (Trivy, fixable HIGH/CRITICAL block)
+        env:
+          TRIVY_IMAGE: aquasec/trivy:0.67.2@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08
+        run: >-
+          docker run --rm
+          -v "$PWD/gate-release.tar:/tmp/gate-release.tar:ro"
+          "$TRIVY_IMAGE" image
+          --input /tmp/gate-release.tar
+          --scanners vuln
+          --severity HIGH,CRITICAL
+          --ignore-unfixed
+          --exit-code 1
+          --no-progress
+      - name: Build ops image
+        run: docker build --target ops --tag "gate-ops:${GITHUB_SHA}" .
+      - name: Ops image backup and restore drill
+        run: bash tools/ci/ops-image-drill.sh "gate-release:${GITHUB_SHA}" "gate-ops:${GITHUB_SHA}"
+      - name: Export ops image
+        run: docker save --output gate-ops.tar "gate-ops:${GITHUB_SHA}"
+      - name: Ops image vulnerability scan (Trivy, fixable HIGH/CRITICAL block)
+        env:
+          TRIVY_IMAGE: aquasec/trivy:0.67.2@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08
+        run: >-
+          docker run --rm
+          -v "$PWD/gate-ops.tar:/tmp/gate-ops.tar:ro"
+          "$TRIVY_IMAGE" image
+          --input /tmp/gate-ops.tar
+          --scanners vuln
+          --severity HIGH,CRITICAL
+          --ignore-unfixed
+          --exit-code 1
+          --no-progress
+
+  release:
+    needs: [formal, image-scan]
+    permissions:
+      contents: write
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # install scripts run in this write-token job; gh gets GH_TOKEN explicitly
+          clean: true
+          fetch-depth: 0
+      - name: The tag is on main
+        # a release ships only a commit main already holds (and CI gated), never a tag pushed on a side branch
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "Tag $GITHUB_REF_NAME is not on main" >&2; exit 1; }
+      - name: macOS paths
+        if: runner.os == 'macOS'
+        run: |
+          echo /Applications/Docker.app/Contents/Resources/bin >> "$GITHUB_PATH"
+          echo /opt/homebrew/bin >> "$GITHUB_PATH"
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Tarball, SBOM, SHA256SUMS
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_SIGNING_HOOK: ${{ vars.RELEASE_SIGNING_HOOK }}
+          RELEASE_SSH_KEY_PASSPHRASE: ${{ secrets.RELEASE_SSH_KEY_PASSPHRASE }}
+        run: bash scripts/release/pack.sh "$TAG"
+      - name: GitHub release
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          command -v gh >/dev/null || { echo 'gh CLI missing on this runner (docs/RELEASE.md)' >&2; exit 1; }
+          out="dist/release/${TAG#v}"
+          gh release create "$TAG" "$out"/* --verify-tag --title "Qadamar $TAG" \
+            --notes "Changes: CHANGELOG.md. Verify with SHA256SUMS; contents, SBOM and signing status: docs/RELEASE.md."

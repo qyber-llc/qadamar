@@ -1,0 +1,47 @@
+{
+  "engine": "Higgsfield seed_audio, preset voice Petra (English)",
+  "voiceId": "0c63637d-2ecb-5bda-9bbe-38894aa9a876",
+  "voiceType": "preset",
+  "output": "qadamar-usecases.mp4",
+  "tempo": 1.12,
+  "padSeconds": 0.9,
+  "scenes": [
+    {
+      "id": "intro",
+      "spoken": "Qadamar decides, on every request, who may see or do what. And it keeps a record of every decision."
+    },
+    {
+      "id": "billes",
+      "spoken": "Think of each request as a marble. It passes a row of gates, always in the same order. A single no is enough to stop it."
+    },
+    {
+      "id": "paiement",
+      "spoken": "First case: a payment. Whoever created it can neither approve it nor release it. A second person has to."
+    },
+    {
+      "id": "urgence",
+      "spoken": "In an emergency, you can break the glass. Access lasts four hours at most, never for yourself, an alert goes out, and someone else reviews it afterwards. But it never grants a clearance level you don't already hold."
+    },
+    {
+      "id": "niveaux",
+      "spoken": "Documents carry a level, from L zero to L three. You cannot read above your level. And you cannot write below it, so a secret never leaks downwards."
+    },
+    {
+      "id": "contexte",
+      "spoken": "Context is checked on every request: network, time, device, recent sign-in. Off the trusted network, the reachable level drops. And if a signal is missing, the answer is no."
+    },
+    {
+      "id": "regles",
+      "spoken": "To change a rule, you first see its impact: who gains access, and who loses it. Then a second person approves. Nobody can approve their own change."
+    },
+    {
+      "id": "journal",
+      "spoken": "Every decision is written to a chained log. If one entry is altered, the chain breaks, and verification shows it."
+    },
+    {
+      "id": "fin",
+      "spoken": "Your access rules in one place, instead of scattered through the code. Qadamar."
+    }
+  ],
+  "fps": 25
+}

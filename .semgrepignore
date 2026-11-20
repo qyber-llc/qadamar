@@ -1,0 +1,14 @@
+# Semgrep scans the shipped sources (packages/*/src, apps/admin/src, scripts, tools). A .semgrepignore replaces
+# Semgrep's default ignores, so those are repeated here.
+node_modules/
+dist/
+.git/
+# tests, browser checks and fixtures hold deliberate fake secrets and hostile inputs
+packages/*/test/
+apps/admin/test/
+apps/admin/e2e/
+examples/
+# documentation, design material and generated reports
+docs/
+design/
+*.md

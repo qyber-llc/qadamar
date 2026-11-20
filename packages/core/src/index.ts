@@ -1,0 +1,17 @@
+export * from './types.ts';
+export { actionDef, certificationGap, evaluate, postStateRequired, procedureFingerprint, expandRoles, liveRoles, mergeObligations, rbacGrant, withLiveRoles } from './evaluate.ts';
+export { buildFilter, filterDecides } from './filter.ts';
+export { CandidateSet, ResourceCandidates, subjectCandidates } from './candidates.ts';
+export { check, indexTuples, patchTupleIndex, isLive, keyOf, windowOf, windowState, type GrantBounds, knownObjects, knownSubjects, type Graph, type RelationResult, type TupleIndexChange } from './relations.ts';
+export { evalExpr, evalTri, mayHold, partial, resolvePath, TRUE, FALSE, UNKNOWN, isTrue, isFalse, type Env, type Tri } from './conditions.ts';
+export { requestErrors, contextSignalErrors, principals, MAX_DELEGATION_DEPTH } from './request.ts';
+export { contextChecks, contextFilter, contextRuleApplies, contextRuleSelected, cidrParts, ipInRange, rangesOf, inTimeWindow, validAuthMethods, validCountry, validInstant, validIp } from './context.ts';
+export { bibaNoReadDown, INTEGRITY_RANK, isWrite, levelInheritanceErrors, mandatoryFindings, sessionOf } from './mandatory.ts';
+export { evaluationCount, obligationLoss, simulate, type Change, type Impact, type ImpactAnalysis, type ImpactCell, type ImpactContextAnalysis, type ImpactContextClass, type ObligationChange, type ObligationDelta, type World } from './simulate.ts';
+export { canonical, fnv1a64, legacyPolicyVersion, policyVersion } from './version.ts';
+export { validateBundle, DEPRECATED_CONTENT_FIELD } from './validate.ts';
+export { contentRules } from './content.ts';
+export { ivpsFor, verifyIntegrity, type IvpResult } from './integrity.ts';
+export { mandatoryWeakenings } from './weakening.ts';
+export { failedValidators, procedureFindings, validatorsFor, type ProcedureFinding } from './procedures.ts';
+export { CEDAR_NAMESPACE, CedarMappingError, toCedar, toCedarRequest, type CedarEntity, type CedarExport, type CedarRequest, type CedarUid, type Unsupported } from './cedar.ts';

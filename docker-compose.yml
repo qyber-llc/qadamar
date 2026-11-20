@@ -1,0 +1,85 @@
+# PostgreSQL 17 and two Qadamar nodes. Both nodes run the same image; whichever takes the PostgreSQL advisory lock first
+# serves, the other blocks before opening its port and takes over when the active one stops. See docs/DEPLOY.md.
+# Images are not pinned by digest here (written offline); pin them after the first pull.
+x-gate: &gate
+  build:
+    context: .
+  image: gate:local
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: postgresql://${POSTGRES_USER:-gate_app}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD to a strong URL-safe password}@postgres:5432/${POSTGRES_DB:-gate}
+    # Demo-only plaintext on the isolated container network; production non-local databases require verify-full.
+    DATABASE_TLS: disable
+    METRICS_TOKEN: ${METRICS_TOKEN:-}
+    # seals the decision-token signing keys stored in PostgreSQL; both nodes need the same value
+    SIGNING_KEY_SEAL: ${SIGNING_KEY_SEAL:?Set SIGNING_KEY_SEAL to 32 random bytes (base64url or 64 hex characters)}
+    # default in every profile: SoD trusts only server-recorded history; caller is a warned demo/test opt-in
+    SOD_HISTORY: ${SOD_HISTORY:-server}
+    RESOURCE_OWNERS: ${RESOURCE_OWNERS:-}
+    # demo profile inside a container: it must listen on the container address (HOST=0.0.0.0 in the image); the
+    # published ports below stay on the host's loopback. Set METRICS_TOKEN to read /metrics.
+    DEMO_ALLOW_REMOTE: "true"
+  volumes:
+    # keys, accounts, PEP credentials and lockouts are in PostgreSQL (docs/API.md 3.9.1); the volume holds the first start's
+    # INITIAL-CREDENTIALS.txt and the files a pre-PostgreSQL-documents deployment imports once
+    - gate-runtime:/var/lib/gate
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  networks:
+    - database
+    - edge
+
+services:
+  postgres:
+    image: postgres:17@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gate}
+      POSTGRES_USER: ${POSTGRES_USER:-gate_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD to a strong URL-safe password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready does not authenticate: it only asks whether the server accepts connections
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # no published port: only the Qadamar nodes reach it
+    networks:
+      - database
+    security_opt:
+      - no-new-privileges:true
+
+  gate-active:
+    <<: *gate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8787:8787"
+
+  gate-standby:
+    <<: *gate
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gate-active:
+        condition: service_started
+    ports:
+      - "127.0.0.1:8788:8787"
+
+volumes:
+  postgres-data:
+  gate-runtime:
+
+networks:
+  # internal: no route out, and Docker publishes no port from an internal-only container, so the nodes also join edge
+  database:
+    internal: true
+  edge:

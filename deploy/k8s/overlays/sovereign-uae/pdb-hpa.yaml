@@ -1,0 +1,27 @@
+# Decision replicas: never fewer than one through a voluntary disruption, and scaled on CPU between the bounds below.
+# gate-replica-keys must hold one key per ordinal up to maxReplicas BEFORE the HPA can use it (components/replicas): a
+# pod without its key cannot start. PARAMETER (owner, cost): the bounds; the TO DECIDE values of docs/MANAGED-OFFER.md §11.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: gate-replica
+spec:
+  minAvailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  selector:
+    matchLabels: {app.kubernetes.io/name: gate, app.kubernetes.io/component: replica}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gate-replica
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: StatefulSet, name: gate-replica}
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource: {name: cpu, target: {type: Utilization, averageUtilization: 70}}
+  behavior:
+    # a new replica first loads the signed state; scale down slowly so a retired ordinal is not recreated at once
+    scaleDown: {stabilizationWindowSeconds: 600}

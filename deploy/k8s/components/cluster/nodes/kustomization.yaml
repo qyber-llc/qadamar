@@ -1,0 +1,12 @@
+# Part of the cluster component (../kustomization.yaml): adds the StatefulSet and its headless Service, and copies the
+# base Deployment's pod template into the StatefulSet. A separate component because kustomize applies a component's
+# patches before its replacements: the parent's patches then see the copied template.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources: [nodes.yaml]
+replacements:
+  - source: {kind: Deployment, name: gate, fieldPath: spec.template}
+    targets:
+      - select: {kind: StatefulSet, name: gate}
+        fieldPaths: [spec.template]
+        options: {create: true}

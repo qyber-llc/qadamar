@@ -1,0 +1,43 @@
+{
+  "engine": "Higgsfield seed_audio, preset voice Petra (English)",
+  "voiceId": "0c63637d-2ecb-5bda-9bbe-38894aa9a876",
+  "voiceType": "preset",
+  "output": "qadamar-sectors.mp4",
+  "tempo": 1.12,
+  "padSeconds": 1.1,
+  "scenes": [
+    {
+      "id": "intro",
+      "spoken": "Every day, regulated organisations decide who may see what. Qadamar makes each of those decisions, explains it, and records it."
+    },
+    {
+      "id": "engine",
+      "spoken": "Each request passes nine checks, always in the same order: from role, through classification and need-to-know, to context and separation of duty. A single deny stops it."
+    },
+    {
+      "id": "government",
+      "spoken": "Government. Case files carry a classification and compartments. An analyst cleared to L two searches the archive: L three files never appear, not even their titles. And off the trusted network, the reachable level drops."
+    },
+    {
+      "id": "banking",
+      "spoken": "Banking. The officer who creates a payment cannot approve it, or release it. Release runs as a certified command, with a single-use, signed token. And a document carrying account numbers is never exported."
+    },
+    {
+      "id": "healthcare",
+      "spoken": "Healthcare. A clinician sees the records of the patients they treat, and nothing else. In an emergency, the glass can be broken, with a reason, for four hours at most. An alert goes out, and someone else reviews it."
+    },
+    {
+      "id": "crm",
+      "spoken": "Enterprise CRM. A project manager opens a contract: the client, the scope, the milestones. The amounts come back masked, because they carry the finance class. A finance approver opens the same contract and sees them. And if the mask cannot be applied, nothing is released."
+    },
+    {
+      "id": "governance",
+      "spoken": "Every rule change shows its impact first, and needs a second approver. And every decision lands in a hash-chained log that an auditor can verify."
+    },
+    {
+      "id": "outro",
+      "spoken": "Qadamar. Self-hosted access control for regulated organisations."
+    }
+  ],
+  "fps": 25
+}

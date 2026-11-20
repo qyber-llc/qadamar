@@ -1,0 +1,20 @@
+# LOCAL TEST ONLY: the local overlay (../local, same test stand-ins) in cluster mode, two deciding pods.
+# OVERLAY=deploy/k8s/overlays/local-cluster scripts/managed/new-tenant.sh <tenant>, then scripts/managed/smoke.sh <tenant>.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: [../local]
+components: [../../components/cluster]
+patches:
+  # the local nodes serve TLS themselves (the test certificate names *.gate-nodes.<namespace>.svc): forward over https
+  - target: {kind: StatefulSet, name: gate}
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata: {name: gate}
+      spec:
+        template:
+          spec:
+            containers:
+              - name: gate
+                env:
+                  - {name: GATE_NODE_SCHEME, value: https}

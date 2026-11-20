@@ -1,0 +1,42 @@
+[
+  {
+    "id": "intro",
+    "start": 0,
+    "dur": 9.84
+  },
+  {
+    "id": "engine",
+    "start": 9.84,
+    "dur": 13.68
+  },
+  {
+    "id": "government",
+    "start": 23.52,
+    "dur": 15.48
+  },
+  {
+    "id": "banking",
+    "start": 39,
+    "dur": 15.28
+  },
+  {
+    "id": "healthcare",
+    "start": 54.28,
+    "dur": 16.76
+  },
+  {
+    "id": "crm",
+    "start": 71.04,
+    "dur": 23.88
+  },
+  {
+    "id": "governance",
+    "start": 94.92,
+    "dur": 9.2
+  },
+  {
+    "id": "outro",
+    "start": 104.12,
+    "dur": 6.8
+  }
+]

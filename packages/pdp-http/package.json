@@ -1,0 +1,21 @@
+{
+  "name": "@product/pdp-http",
+  "version": "0.12.2",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/server.ts"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "start": "node src/main.ts"
+  },
+  "dependencies": {
+    "@node-saml/node-saml": "5.2.0",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
+  }
+}

@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qadamar — sector use cases (video source)</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #05080a; }
+  .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; }
+  svg { display: block; position: absolute; left: 0; top: 0; font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
+  .m { font-family: "SF Mono", Menlo, Monaco, monospace; }
+</style>
+<link rel="stylesheet" href="../../../design/gate-brand.css">
+<link rel="stylesheet" href="../brand.css">
+</head>
+<body>
+<div id="root"></div>
+<script src="../kit.js"></script>
+<script>
+// Source of docs/media/sectors/gate-sectors.mp4, rendered by docs/media/build.mjs. Every frame is a pure function of
+// time: setTimes() once, then frame(t). Open this file with ?t=30 to inspect one frame (nominal 14 s per scene).
+// Scenarios are illustrative, not customers. Decision codes are the engine's own (packages/core/src); the CRM mask is
+// the toy bundle's finance-mask rule and the SDK/gateway enforcement (packages/sdk/src/enforce.ts, docs/API.md).
+const SCENES = {
+  intro:      { label: 'ACCESS DECISIONS', title: 'Every request. One decision. On the record.' },
+  engine:     { label: 'HOW IT DECIDES', title: 'Nine checks, fixed order. One deny stops it.' },
+  government: { label: '01 · GOVERNMENT', title: 'Search never reveals what you cannot read.', tag: 'GOVERNMENT' },
+  banking:    { label: '02 · BANKING', title: 'Four eyes on every payment.', tag: 'BANKING' },
+  healthcare: { label: '03 · HEALTHCARE', title: 'Need-to-know, with an emergency exit.', tag: 'HEALTHCARE' },
+  crm:        { label: '04 · ENTERPRISE CRM', title: 'The contract, without its prices.', tag: 'ENTERPRISE' },
+  governance: { label: 'GOVERNANCE & AUDIT', title: 'Two people per rule change. Every decision verifiable.' },
+  outro:      {},
+};
+// Decision console lines per scene: [progress, status, action, code]. Codes as emitted by the engine.
+const LOG = {
+  intro: [[0.35, 'PERMIT', 'read  record', 'RBAC'], [0.5, 'DENY', 'export  document', 'ABAC.CONTENT_DENY'], [0.65, 'PERMIT', 'approve  payment', 'SOD'], [0.8, 'DENY', 'read  case file', 'BLP.NO_READ_UP']],
+  engine: [[0.42, 'PERMIT', 'read  case file', 'all 9 checks'], [0.85, 'DENY', 'read  case file', 'NTK.NO_REASON']],
+  government: [[0.2, 'PERMIT', 'search  archive', 'L0–L2 released'], [0.42, 'HIDDEN', 'L3 results', 'BLP.NO_READ_UP'], [0.8, 'DENY', 'read  L2 · untrusted net', 'NET.UNTRUSTED_LEVEL']],
+  banking: [[0.12, 'PERMIT', 'create  payment', 'officer A'], [0.3, 'DENY', 'approve  · officer A', 'SOD.create-vs-approve'], [0.47, 'PERMIT', 'approve  · officer B', 'two-person'], [0.64, 'PERMIT', 'release  · token consumed', 'certified command'], [0.86, 'DENY', 'export  statement', 'ABAC.CONTENT_DENY']],
+  healthcare: [[0.16, 'PERMIT', 'read  record A', 'relation: treats'], [0.3, 'DENY', 'read  record B', 'NTK.NO_REASON'], [0.62, 'PERMIT', 'read  record B · ≤ 4 h', 'NTK.BREAK_GLASS'], [0.74, 'NOTICE', 'break_glass opened', 'webhook signed'], [0.88, 'REVIEW', 'pending · other reviewer', 'break-glass']],
+  crm: [[0.3, 'PERMIT', 'read  contract · pm', 'ABAC.CONTENT_MASK'], [0.55, 'PERMIT', 'read  contract · finance', 'no mask'], [0.84, 'REFUSE', 'release  · class missing', 'unenforceable']],
+  governance: [[0.2, 'PROPOSE', 'rule change', 'impact computed'], [0.38, 'DENY', 'approve own change', 'self-approval'], [0.5, 'APPROVE', 'second person', 'published'], [0.88, 'VERIFY', 'audit chain', 'intact']],
+};
+// Camera shots per scene: [progress, focus x, focus y, zoom], eased between keys.
+const CAM = {
+  intro: [[0, 960, 520, 1.14], [0.4, 930, 530, 1]],
+  engine: [[0, 960, 500, 1], [0.1, 600, 480, 1.22], [0.42, 1480, 480, 1.22], [0.5, 960, 500, 1.02], [0.58, 760, 470, 1.18], [0.86, 1000, 440, 1.1], [1, 960, 480, 1.02]],
+  government: [[0, 620, 360, 1.2], [0.14, 640, 500, 1.06], [0.34, 640, 520, 1.08], [0.52, 960, 530, 1], [0.64, 1160, 540, 1.05], [0.86, 1080, 540, 1.02], [1, 960, 540, 1]],
+  banking: [[0, 420, 330, 1.2], [0.14, 700, 420, 1.1], [0.42, 980, 420, 1.12], [0.6, 1380, 400, 1.15], [0.72, 1300, 600, 1.08], [1, 1180, 560, 1.06]],
+  healthcare: [[0, 640, 420, 1.15], [0.3, 1050, 470, 1.06], [0.4, 520, 640, 1.18], [0.66, 820, 620, 1.1], [0.84, 1150, 680, 1.08], [1, 960, 560, 1]],
+  crm: [[0, 960, 340, 1.2], [0.16, 960, 470, 1.02], [0.22, 700, 560, 1.07], [0.4, 700, 560, 1.07], [0.46, 1220, 560, 1.07], [0.64, 1220, 560, 1.07], [0.7, 960, 530, 1], [1, 960, 540, 1]],
+  governance: [[0, 420, 420, 1.15], [0.14, 700, 420, 1.08], [0.3, 1250, 420, 1.08], [0.56, 960, 520, 1], [1, 960, 540, 1]],
+  outro: [[0, 960, 470, 1.1], [1, 960, 540, 1]],
+};
+const ORDER = ['intro', 'engine', 'government', 'banking', 'healthcare', 'crm', 'governance'];
+// ---- scenes: (p = progress 0..1, lt = seconds into scene, t = global seconds) ----
+const DRAW = {
+  intro(p, lt, t) {
+    let s = '';
+    const keys = ['government', 'banking', 'healthcare', 'enterprise'], chips = ['read · case file', 'approve · payment', 'read · record', 'read · contract'];
+    keys.forEach((key, i) => {
+      const y = 245 + i * 165, u = ko(p, 0.04 + i * 0.05, 0.18 + i * 0.05);
+      s += `<g ${reveal(u)}><g transform="translate(330 ${y}) scale(.85)">${ICON[key](C.text)}</g>` + tx(330, y + 76, 15, key.toUpperCase(), { m: 1, a: 'middle', fill: C.dim, ls: 3 }) + `</g>`;
+      s += flow(410, y, 830, 520, k(p, 0.16 + i * 0.04, 0.32 + i * 0.04), C.line2) + stream(410, y, 830, 520, C.ice, k(p, 0.3, 0.36));
+      s += mover((v) => [L(410, 830, eio(v)), L(y, 520, eio(v))], cl((p - 0.34 - i * 0.07) / 0.2), chips[i], C.ice);
+    });
+    s += engineCore(960, 520, 1, t, ko(p, 0.22, 0.4));
+    s += flow(1090, 520, 1460, 410, k(p, 0.45, 0.6), C.ok) + flow(1090, 520, 1460, 630, k(p, 0.5, 0.65), C.no);
+    s += stream(1090, 520, 1460, 410, C.ok, k(p, 0.6, 0.65)) + stream(1090, 520, 1460, 630, C.no, k(p, 0.65, 0.7));
+    s += pill(1480, 416, 'PERMIT', C.ok, ko(p, 0.58, 0.68), 22) + pill(1480, 636, 'DENY', C.no, ko(p, 0.62, 0.72), 22);
+    s += tx(1480, 470, 16, scramble('with reason + policy fingerprint', k(p, 0.7, 0.82)), { m: 1, fill: C.dim });
+    return s;
+  },
+  engine(p) {
+    const stages = ['REQUEST', 'SUBJECT', 'ROLE', 'CLASSIFICATION', 'NEED-TO-KNOW', 'POLICY', 'CONTEXT', 'CERTIFIED CMD', 'SEPARATION'];
+    const x0 = 220, dx = 185, y = 470, start = x0 - 60, end = x0 + dx * 8 + 60, stopAt = 4, stopX = x0 + dx * stopAt - 36;
+    let s = `<path d="M${start} ${y} H${end}" stroke="${C.line2}" stroke-width="2"/>` + stream(start, y, end, y, C.ice, k(p, 0.04, 0.1) * 0.5);
+    const a = cl((p - 0.08) / 0.34), b = cl((p - 0.5) / 0.3);
+    const ax = L(start, end, a), bx = Math.min(L(start, end, b), stopX), failed = b > 0 && bx >= stopX - 0.5;
+    const tFail = 0.5 + 0.3 * (stopX - start) / (end - start);
+    stages.forEach((name, i) => {
+      const x = x0 + i * dx, u = ko(p, 0.01 + i * 0.012, 0.08 + i * 0.012);
+      const lit = (a > 0 && p < 0.5 && ax >= x) || (b > 0 && i < stopAt && bx >= x);
+      const col = failed && i === stopAt ? C.no : lit ? C.ok : C.line2;
+      s += `<g ${popAt(x, y, u)}>${hexNode(x, y, 30, col, col !== C.line2)}` +
+        tx(x, y + 7, 18, pad(i + 1), { m: 1, a: 'middle', fill: col === C.line2 ? C.dim : col, w: 700 }) +
+        tx(x, y + 66, 15, scramble(name, cl(u * 1.2)), { m: 1, a: 'middle', fill: C.dim, ls: 1 }) + `</g>`;
+    });
+    s += mover((v) => [L(start, end, v), y], a, 'read · file', C.ok);
+    if (b > 0) s += mover((v) => [Math.min(L(start, end, v), stopX), y], Math.min(b, 0.999), 'read · file', C.no);
+    s += ring(x0 + dx * stopAt, y, cl((p - tFail) / 0.1), C.no, 30, 160) + ring(x0 + dx * stopAt, y, cl((p - tFail - 0.03) / 0.1), C.no, 30, 120);
+    s += verdict(end + 70, y, true, ko(p, 0.4, 0.46) * (1 - k(p, 0.5, 0.54)));
+    s += verdict(x0 + dx * stopAt, y - 210, false, ko(p, 0.8, 0.86), 'NTK.NO_REASON');
+    s += tx(960, 690, 20, 'Mandatory stages run before tenant policy, which cannot reorder or switch them off.', { a: 'middle', fill: C.dim, op: k(p, 0.12, 0.25) });
+    return s;
+  },
+  government(p) {
+    let s = panel(120, 190, 980, 640, p, 0, 'ARCHIVE SEARCH');
+    const q = 'case files  ·  all levels';
+    s += `<g opacity="${k(p, 0.04, 0.1)}"><rect x="150" y="270" width="920" height="54" rx="8" fill="rgba(255,255,255,.03)" stroke="${C.line2}"/>` +
+      `<circle cx="180" cy="297" r="9" fill="none" stroke="${C.dim}" stroke-width="2"/><path d="M187 304 l8 8" stroke="${C.dim}" stroke-width="2"/>` +
+      tx(206, 304, 20, type(q, k(p, 0.06, 0.16)) + (Math.floor(NOW * 2) % 2 && p < 0.2 ? '▍' : ''), { m: 1 }) + `</g>`;
+    const rows = [[1, '', 'Procurement review · regional office'], [3, 'C-ARGUS', 'Source network assessment'], [0, '', 'Public tender archive'],
+      [2, '', 'Port logistics audit'], [3, '', 'Signals summary · quarterly'], [2, 'C-ARGUS', 'Field liaison notes'], [1, '', 'Budget correspondence']];
+    const hide3 = k(p, 0.36, 0.46), close = k(p, 0.46, 0.53), cap = k(p, 0.68, 0.78);
+    let yy = 352;
+    rows.forEach(([lvl, comp, title], i) => {
+      const appear = ko(p, 0.14 + i * 0.025, 0.2 + i * 0.025);
+      const h = lvl === 3 ? 60 * (1 - close) : 60, locked = (lvl === 2 || comp) && lvl !== 3;
+      if (appear > 0 && h > 1) {
+        const tx0 = comp ? 360 : 240;
+        if (lvl === 3 && hide3 > 0) {                                       // L3 rows disintegrate into slices
+          for (let j = 0; j < 30; j++) {
+            const v = cl((hide3 - hash(j + i * 31) * 0.5) / 0.5), w = 920 / 30;
+            if (v < 1) s += `<rect x="${150 + j * w}" y="${yy - v * 50 * hash(j * 7 + i)}" width="${w - 1}" height="${h - 8}" fill="${C.no}" opacity="${0.22 * (1 - v)}"/>`;
+          }
+          s += `<g opacity="${cl(1 - hide3 * 2.5)}">` + pill(170, yy + 32, 'L3', C.no, 1, 16) + tx(tx0, yy + 38, 18, title, { fill: C.no }) + `</g>`;
+        } else {
+          const dim = locked ? 1 - cap * 0.7 : 1;
+          s += `<g ${reveal(appear, 12)}><g opacity="${dim}"><rect x="150" y="${yy}" width="920" height="${h - 8}" rx="6" fill="rgba(255,255,255,.025)" stroke="${lvl === 3 ? C.no : C.line}" stroke-opacity="${lvl === 3 ? 0.5 : 1}"/>` +
+            (h > 40 ? pill(170, yy + 32, `L${lvl}`, lvl === 3 ? C.no : C.ice, 1, 16) + (comp ? pill(232, yy + 32, comp, C.dim, 1, 14) : '') +
+              tx(tx0, yy + 38, 18, title, { fill: lvl === 3 ? C.no : C.text }) + tx(1050, yy + 37, 14, lvl === 3 ? 'L3' : 'released', { m: 1, a: 'end', fill: C.faint }) : '') + `</g>` +
+            (locked && cap > 0.2 ? `<g transform="translate(1000 ${yy + 26})" opacity="${cap}"><rect x="-10" y="-4" width="20" height="16" rx="3" fill="${C.amber}"/><path d="M-6 -4 v-5 a6 6 0 0 1 12 0 v5" fill="none" stroke="${C.amber}" stroke-width="2.5"/></g>` : '') + `</g>`;
+        }
+      }
+      yy += h;
+    });
+    s += tx(150, 800, 16, scramble('L3 results are never released: not even their titles or count.', k(p, 0.44, 0.56)), { m: 1, fill: C.no, op: 1 - cap });
+    s += tx(150, 800, 16, scramble('Untrusted network: only levels allowed off-network stay reachable.', cap), { m: 1, fill: C.amber });
+    s += panel(1160, 190, 640, 640, p, 0.05, 'SUBJECT');
+    s += role(1200, 300, 'Analyst', 'clearance L2 · C-ARGUS', ko(p, 0.08, 0.18));
+    const net = cap > 0.5, sw = cap;
+    s += tx(1200, 410, 16, 'NETWORK', { m: 1, fill: C.dim, ls: 2, op: k(p, 0.1, 0.2) });
+    s += `<g opacity="${k(p, 0.1, 0.2)}"><rect x="1200" y="428" width="76" height="38" rx="19" fill="${net ? C.amber : C.ok}" fill-opacity=".18" stroke="${net ? C.amber : C.ok}"/>` +
+      `<circle cx="${L(1219, 1257, sw)}" cy="447" r="13" fill="${net ? C.amber : C.ok}" filter="url(#glow)"/></g>` + tx(1296, 454, 20, net ? 'untrusted' : 'trusted', { m: 1, fill: net ? C.amber : C.ok, op: k(p, 0.1, 0.2) });
+    s += tx(1200, 520, 16, 'REACHABLE LEVEL', { m: 1, fill: C.dim, ls: 2, op: k(p, 0.12, 0.22) });
+    const reach = L(2, 1, cap);
+    for (let i = 0; i < 4; i++) {
+      const lvl = 3 - i, on = lvl <= reach + 0.01, u = ko(p, 0.12 + i * 0.02, 0.22 + i * 0.02);
+      s += `<g ${reveal(u, 10)}><rect x="1200" y="${545 + i * 64}" width="560" height="50" rx="6" fill="${on ? 'rgba(52,210,123,.10)' : 'rgba(255,255,255,.02)'}" stroke="${on ? C.ok : C.line}"/>` +
+        tx(1224, 578 + i * 64, 20, `L${lvl}`, { m: 1, w: 700, fill: on ? C.ok : C.faint }) +
+        tx(1290, 577 + i * 64, 16, on ? 'reachable' : lvl === 3 ? 'above clearance' : 'not off-network', { m: 1, fill: on ? C.ok : C.faint }) + `</g>`;
+    }
+    return s;
+  },
+  banking(p) {
+    let s = '';
+    const nodes = [['CREATE', 420], ['APPROVE', 960], ['RELEASE', 1500]], y = 330;
+    s += flow(420, y, 1500, y, k(p, 0.02, 0.12), C.line2) + stream(420, y, 1500, y, C.ice, k(p, 0.1, 0.14) * 0.5);
+    nodes.forEach(([n, x], i) => {
+      const u = ko(p, 0.02 + i * 0.03, 0.1 + i * 0.03), at = [0.12, 0.47, 0.64][i], done = p > at;
+      s += ring(x, y, cl((p - at) / 0.08), C.ok, 46, 120);
+      s += `<g ${popAt(x, y, u)}><circle cx="${x}" cy="${y}" r="46" fill="${done ? 'rgba(52,210,123,.1)' : C.bg}" stroke="${done ? C.ok : C.line2}" stroke-width="2.5"${done ? ' filter="url(#glow)"' : ''}/>` +
+        (done ? `<path d="M${x - 14} ${y + 1} L${x - 4} ${y + 11} L${x + 15} ${y - 9}" fill="none" stroke="${C.ok}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` : tx(x, y + 7, 18, pad(i + 1), { m: 1, a: 'middle', fill: C.dim })) +
+        tx(x, y + 84, 16, n, { m: 1, a: 'middle', fill: C.dim, ls: 3 }) + `</g>`;
+    });
+    const cx = p < 0.4 ? 420 : p < 0.56 ? L(420, 960, ss(k(p, 0.4, 0.47))) : L(960, 1500, ss(k(p, 0.56, 0.64)));
+    const cu = ko(p, 0.04, 0.1) * (1 - k(p, 0.7, 0.74));
+    if (cu > 0) s += `<g ${reveal(cu, 14)}><rect x="${cx - 140}" y="${y - 210}" width="280" height="124" rx="10" fill="url(#glass)" stroke="url(#edge)" filter="url(#shadow)"/>` +
+      tx(cx - 118, y - 176, 14, 'PAYMENT', { m: 1, fill: C.dim, ls: 2 }) + tx(cx - 118, y - 146, 17, 'payee   supplier account', { m: 1 }) +
+      tx(cx - 118, y - 120, 17, 'ref     invoice batch', { m: 1 }) + tx(cx - 118, y - 98, 13, 'created by officer A', { m: 1, fill: C.faint }) + `</g>`;
+    s += role(220, 560, 'Officer A', 'maker', ko(p, 0.04, 0.12));
+    s += flow(470, 560, 920, 370, k(p, 0.2, 0.28) * (1 - k(p, 0.36, 0.4)), C.no, true);
+    s += mover((v) => [L(470, 920, v), L(560, 370, v)], cl((p - 0.2) / 0.08), 'approve', C.no);
+    s += verdict(960, 470, false, ko(p, 0.27, 0.32) * (1 - k(p, 0.38, 0.42)), 'SOD.create-vs-approve');
+    s += role(1170, 560, 'Officer B', 'checker · another person', ko(p, 0.36, 0.44), C.ok);
+    s += flow(1170, 540, 1000, 370, k(p, 0.42, 0.47), C.ok, true);
+    s += mover((v) => [L(1170, 1000, v), L(540, 370, v)], cl((p - 0.42) / 0.05), '', C.ok);
+    const tk = k(p, 0.52, 0.62), burn = k(p, 0.62, 0.68);
+    if (tk > 0 && burn < 1) s += `<g opacity="${1 - burn}" transform="translate(${L(1240, 1500, tk)} ${L(470, y, tk)}) scale(${1 - burn * 0.6})"><rect x="-86" y="-21" width="172" height="42" rx="21" fill="${C.ice}" fill-opacity=".14" stroke="${C.ice}" filter="url(#glow)"/>` + tx(0, 6, 15, 'token · Ed25519', { m: 1, a: 'middle', fill: C.ice }) + `</g>`;
+    if (burn > 0 && burn < 1) for (let i = 0; i < 18; i++) { const a = i * Math.PI / 9 + hash(i), d = burn * (50 + 60 * hash(i + 9)); s += `<circle cx="${1500 + Math.cos(a) * d}" cy="${y + Math.sin(a) * d}" r="${3.5 * (1 - burn)}" fill="${C.ice}" filter="url(#glow)"/>`; }
+    s += tx(1500, 460, 15, scramble('single use: consumed', k(p, 0.64, 0.72)), { m: 1, a: 'middle', fill: C.ice });
+    s += panel(1150, 640, 650, 190, p, 0.72, 'EXPORT');
+    const ex = ko(p, 0.74, 0.8);
+    if (ex > 0) {
+      s += `<g ${reveal(ex, 10)}><rect x="1180" y="718" width="150" height="90" rx="6" fill="rgba(255,255,255,.03)" stroke="${C.line2}"/>` +
+        tx(1196, 744, 12, 'statement', { m: 1, fill: C.dim }) + tx(1196, 768, 12, 'account no.', { m: 1, fill: C.amber }) + tx(1196, 790, 12, 'history', { m: 1, fill: C.dim }) +
+        pill(1350, 760, 'content: pii.iban', C.amber, 1, 15) + flow(1560, 764, 1640, 764, k(p, 0.8, 0.86), C.no, true) + `</g>`;
+      s += verdict(1700, 764, false, ko(p, 0.86, 0.9));
+    }
+    return s;
+  },
+  healthcare(p, lt) {
+    let s = role(170, 440, 'Clinician', 'care team · ward 4', ko(p, 0.03, 0.12), C.ice);
+    const rec = (x, y, title, a, blur, col) => {
+      const u = ko(p, a, a + 0.08);
+      if (u <= 0) return '';
+      return `<g ${reveal(u)}><g${blur > 0.2 ? ` style="filter: blur(${blur}px)"` : ''}><rect x="${x}" y="${y}" width="420" height="230" rx="10" fill="url(#glass)" stroke="${col}" stroke-opacity=".7" stroke-width="1.5" filter="url(#shadow)"/>` +
+        tx(x + 26, y + 40, 15, title, { m: 1, fill: C.dim, ls: 2 }) + `<path d="M${x + 26} ${y + 56} H${x + 394}" stroke="${C.line}"/>` +
+        tx(x + 26, y + 92, 15, 'allergies', { m: 1, fill: C.faint }) + tx(x + 160, y + 92, 17, 'recorded') +
+        tx(x + 26, y + 130, 15, 'medication', { m: 1, fill: C.faint }) + tx(x + 160, y + 130, 17, 'current list') +
+        tx(x + 26, y + 168, 15, 'notes', { m: 1, fill: C.faint }) + tx(x + 160, y + 168, 17, 'admission summary') +
+        tx(x + 26, y + 202, 15, 'care team', { m: 1, fill: C.faint }) + tx(x + 160, y + 202, 17, 'ward 4') + `</g></g>`;
+    };
+    const bg = k(p, 0.5, 0.6);
+    s += rec(900, 200, 'PATIENT RECORD · A', 0.08, 0, C.ok);
+    s += rec(900, 520, 'PATIENT RECORD · B', 0.14, L(12, 0, bg) * (p > 0.24 ? 1 : 0), bg > 0.5 ? C.amber : C.no);
+    s += flow(430, 425, 900, 315, k(p, 0.1, 0.16), C.ok) + stream(430, 425, 900, 315, C.ok, k(p, 0.16, 0.2)) + tx(640, 352, 15, 'treats', { m: 1, fill: C.ok, op: k(p, 0.12, 0.18) });
+    s += verdict(1390, 315, true, ko(p, 0.15, 0.2));
+    s += mover((v) => [L(430, 900, v), L(455, 600, v)], cl((p - 0.22) / 0.07), 'read · B', C.no);
+    s += verdict(1390, 635, false, ko(p, 0.28, 0.33) * (1 - k(p, 0.48, 0.52)), 'NTK.NO_REASON');
+    s += panel(170, 560, 560, 270, p, 0.36, 'EMERGENCY ACCESS', C.amber);
+    const g = ko(p, 0.38, 0.46);
+    if (g > 0) {
+      const hit = cl((p - 0.52) / 0.06);
+      s += `<g ${reveal(g, 10)}><rect x="200" y="640" width="500" height="46" rx="6" fill="rgba(255,255,255,.03)" stroke="${C.line2}"/>` +
+        tx(218, 670, 17, 'reason: ' + type('emergency admission', k(p, 0.42, 0.5)), { m: 1 }) +
+        `<rect x="200" y="706" width="200" height="50" rx="8" fill="${C.amber}" fill-opacity="${p > 0.52 ? 0.28 : 0.1}" stroke="${C.amber}"${p > 0.52 ? ' filter="url(#glow)"' : ''}/>` + tx(300, 738, 17, 'BREAK GLASS', { m: 1, a: 'middle', fill: C.amber, w: 700 }) + `</g>`;
+      if (hit > 0) {                                                  // glass crack and shards
+        for (let i = 0; i < 9; i++) { const a = i * 0.7 + hash(i) * 0.5, len = 26 + 44 * hash(i + 3); s += `<path d="M300 731 L${300 + Math.cos(a) * len * cl(hit * 4)} ${731 + Math.sin(a) * len * 0.6 * cl(hit * 4)}" stroke="#fff" stroke-width="1.4" opacity="${0.8 * (1 - hit)}"/>`; }
+        for (let i = 0; i < 10; i++) { const a = hash(i + 20) * 6.28, d = eo(hit) * (60 + 70 * hash(i + 30)); s += `<polygon points="0,-5 5,4 -4,3" transform="translate(${300 + Math.cos(a) * d} ${731 + Math.sin(a) * d}) rotate(${hit * 400 * hash(i)})" fill="${C.amber}" opacity="${1 - hit}"/>`; }
+      }
+      const ringU = cl((p - 0.55) / 0.45), r = 34, a = 2 * Math.PI * (1 - ringU * 0.25);
+      if (p > 0.55) s += `<g transform="translate(470 731)"><circle r="${r}" fill="none" stroke="${C.line2}" stroke-width="5"/><path d="M0 ${-r} A${r} ${r} 0 ${a > Math.PI ? 1 : 0} 1 ${r * Math.sin(a)} ${-r * Math.cos(a)}" fill="none" stroke="${C.amber}" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/></g>` + tx(520, 737, 17, '≤ 4 h', { m: 1, fill: C.amber });
+      const bell = k(p, 0.7, 0.76);
+      s += `<g opacity="${bell}" transform="translate(630 731)"><path d="M-12 8 V-2 a12 12 0 0 1 24 0 V8 l4 4 h-32 z" fill="none" stroke="${C.amber}" stroke-width="2.5"/><circle cy="16" r="3" fill="${C.amber}"/>` +
+        `<circle r="${20 + (lt * 30) % 18}" fill="none" stroke="${C.amber}" opacity="${0.6 - ((lt * 30) % 18) / 30}"/></g>` + tx(200, 800, 15, scramble('alert sent  ·  never for yourself  ·  no clearance added', bell), { m: 1, fill: C.dim });
+    }
+    s += flow(730, 700, 900, 635, k(p, 0.55, 0.62), C.amber, true);
+    s += verdict(1390, 635, true, ko(p, 0.6, 0.65));
+    s += role(1400, 800, 'Reviewer', 'another person · pending', ko(p, 0.84, 0.9), C.amber);
+    return s;
+  },
+  crm(p) {
+    let s = '';
+    const RX = 690, RY = 140, RW = 540, broken = k(p, 0.68, 0.72);
+    const F = [['client', 'Client account'], ['scope', 'Platform rollout, phase 2'], ['milestones', 'Design · Build · Go-live'], ['total value'], ['day rate'], ['margin']];
+    s += panel(RX, RY, RW, 390, p, 0, 'CONTRACT · STORED RECORD');
+    F.forEach(([name, val], i) => {
+      const u = ko(p, 0.04 + i * 0.02, 0.1 + i * 0.02), y = RY + 98 + i * 46;
+      if (u <= 0) return;
+      s += `<g ${reveal(u, 10)}>` + tx(RX + 26, y, 15, name, { m: 1, fill: C.faint }) +
+        (val ? tx(RX + 170, y, 17, type(val, k(p, 0.05 + i * 0.02, 0.14 + i * 0.02))) : blocks(RX + 170, y, C.amber, 0.5)) + `</g>`;
+      if (!val) {
+        s += pill(RX + 340, y - 2, 'finance.amount', C.amber, ko(p, 0.12 + i * 0.01, 0.17 + i * 0.01) * (1 - broken), 13);
+        s += pill(RX + 340, y - 2, 'untagged', C.no, ko(p, 0.7 + i * 0.01, 0.74 + i * 0.01), 13);
+      }
+    });
+    // enforcement point (SDK / gateway) between the record and the readers
+    const EX = 960, EY = 640, eu = ko(p, 0.12, 0.2), red = k(p, 0.78, 0.8);
+    s += flow(EX, RY + 390, EX, EY - 50, k(p, 0.14, 0.2), C.line2) + stream(EX, RY + 390, EX, EY - 50, C.ice, k(p, 0.2, 0.24) * (1 - red));
+    if (eu > 0) s += `<g ${popAt(EX, EY, eu)}><circle cx="${EX}" cy="${EY}" r="90" fill="url(#${red > 0.5 ? 'coreRed' : 'core'})"/>${hexNode(EX, EY, 50, red > 0.5 ? C.no : C.ok, true)}` +
+      tx(EX, EY + 6, 16, 'PEP', { m: 1, a: 'middle', fill: red > 0.5 ? C.no : C.ok, w: 700, ls: 3 }) + tx(EX, EY + 82, 14, 'gateway / SDK', { m: 1, a: 'middle', fill: C.dim }) + `</g>`;
+    s += ring(EX, EY, cl((p - 0.79) / 0.1), C.no, 50, 170);
+    const view = (x, title, roleTxt, col, a, masked) => {
+      let v = panel(x, 540, 500, 300, p, a, title, col);
+      v += pill(x + 26, 626, roleTxt, col, ko(p, a + 0.03, a + 0.08), 14);
+      F.forEach(([name, val], i) => {
+        const u = ko(p, a + 0.1 + i * 0.015, a + 0.15 + i * 0.015), y = 672 + i * 28;
+        if (u <= 0) return;
+        v += `<g ${reveal(u, 8)}>` + tx(x + 26, y, 14, name, { m: 1, fill: C.faint });
+        if (val) v += tx(x + 170, y, 15, val);
+        else if (masked) v += tx(x + 170, y, 15, scramble('[MASKED]', cl(u * 1.2)), { m: 1, fill: C.amber, w: 700 }) +
+          `<g transform="translate(${x + 290} ${y - 5})" opacity="${u}"><path d="M-10 0 Q0 -8 10 0 Q0 8 -10 0 Z" fill="none" stroke="${C.amber}" stroke-width="1.6"/><path d="M-9 7 L9 -7" stroke="${C.amber}" stroke-width="1.6"/></g>`;
+        else v += blocks(x + 170, y + 1, C.ok, 0.75);
+        v += `</g>`;
+      });
+      return v;
+    };
+    // project manager: permitted, amounts masked
+    s += view(110, 'PROJECT MANAGER · VIEW', 'roles: project_manager', C.ice, 0.18, true);
+    s += flow(610, 690, EX - 60, EY + 20, k(p, 0.2, 0.24), C.line2);
+    s += mover((v) => [L(EX - 60, 610, ss(v)), L(EY + 20, 690, ss(v))], cl((p - 0.24) / 0.06), 'mask finance.amount', C.amber);
+    s += pill(640, 600, 'ABAC.CONTENT_MASK', C.amber, ko(p, 0.26, 0.3) * (1 - k(p, 0.66, 0.7)), 13);
+    // finance approver: permitted, nothing masked
+    s += view(1310, 'FINANCE APPROVER · VIEW', 'roles: finance_approver', C.ok, 0.42, false);
+    s += flow(EX + 60, EY + 20, 1310, 690, k(p, 0.44, 0.48), C.line2);
+    s += mover((v) => [L(EX + 60, 1310, ss(v)), L(EY + 20, 690, ss(v))], cl((p - 0.48) / 0.06), 'no mask', C.ok);
+    // the mask cannot be applied: nothing is released
+    s += mover((v) => [L(610, EX - 60, v), L(720, EY + 30, v)], cl((p - 0.72) / 0.07), 'read · contract', C.ice);
+    const nr = ko(p, 0.8, 0.86);
+    if (nr > 0) s += `<g opacity="${nr}"><rect x="110" y="540" width="500" height="300" rx="10" fill="${C.bg}" fill-opacity=".95"/>` +
+      `<rect x="110" y="540" width="500" height="300" rx="10" fill="none" stroke="${C.no}" stroke-opacity=".7" stroke-width="1.5"/></g>` +
+      tx(360, 676, 22, scramble('NO RECORD RELEASED', nr), { m: 1, a: 'middle', fill: C.no, w: 700, ls: 2 }) +
+      tx(360, 712, 15, scramble('the mask cannot be applied', k(p, 0.83, 0.92)), { m: 1, a: 'middle', fill: C.dim });
+    s += verdict(EX, EY + 150, false, ko(p, 0.8, 0.86), 'obligation_unenforceable');
+    return s;
+  },
+  governance(p, lt) {
+    let s = panel(120, 190, 520, 400, p, 0.01, 'RULE CHANGE');
+    const diff = [[' ', 'rule  pm-contract-read'], ['-', 'actions  read, export'], ['+', 'actions  read'], [' ', 'when  role = project_manager'], ['+', 'mask  finance.amount'], [' ', 'scope  tenant']];
+    diff.forEach(([d, line], i) => {
+      const u = ko(p, 0.04 + i * 0.015, 0.1 + i * 0.015), col = d === '+' ? C.ok : d === '-' ? C.no : C.dim, y = 280 + i * 44;
+      if (u <= 0) return;
+      s += `<g ${reveal(u, 8)}>` + (d !== ' ' ? `<rect x="146" y="${y - 22}" width="468" height="32" rx="4" fill="${col}" opacity=".09"/>` : '') +
+        tx(156, y, 17, d, { m: 1, fill: col, w: 700 }) + tx(184, y, 17, type(line, cl(u * 1.4)), { m: 1, fill: d === ' ' ? C.dim : C.text }) + `</g>`;
+    });
+    s += panel(680, 190, 520, 400, p, 0.12, 'IMPACT PREVIEW');
+    const im = k(p, 0.16, 0.26), ROWS = [['gain access', C.ok, 0.35], ['lose access', C.no, 0.6], ['obligations changed', C.ice, 0.2]];
+    ROWS.forEach(([lab, col, w], i) => {
+      s += tx(710, 290 + i * 90, 17, lab, { m: 1, fill: col, op: im }) + `<rect x="710" y="${306 + i * 90}" width="460" height="14" rx="7" fill="${C.line}" opacity="${im}"/>` +
+        `<rect x="710" y="${306 + i * 90}" width="${460 * im * w}" height="14" rx="7" fill="${col}" opacity=".65"/>`;
+    });
+    s += role(1250, 260, 'Author', 'proposes', ko(p, 0.03, 0.12));
+    s += verdict(1700, 260, false, ko(p, 0.34, 0.4) * (1 - k(p, 0.45, 0.48)), 'own change');
+    s += role(1250, 400, 'Approver', 'second person', ko(p, 0.44, 0.5), C.ok);
+    s += verdict(1700, 400, true, ko(p, 0.5, 0.55));
+    s += tx(1250, 520, 16, scramble('published  ·  two-person rule satisfied', k(p, 0.52, 0.6)), { m: 1, fill: C.ok });
+    s += panel(120, 630, 1680, 200, p, 0.58, 'AUDIT CHAIN');
+    const ch = ko(p, 0.6, 0.68), scroll = lt * 22;
+    if (ch > 0) {
+      const sweep = k(p, 0.78, 0.92);
+      for (let i = 0; i < 10; i++) {
+        const n = i + Math.floor(scroll / 190), x = 160 + i * 190 - (scroll % 190);
+        if (x < 130 || x > 1640) continue;
+        const hx = [...Array(8)].map((_, j) => '0123456789abcdef'[Math.floor(hash(n * 17 + j) * 16)]).join('');
+        const verified = sweep > 0 && x < L(140, 1640, sweep);
+        s += `<g opacity="${ch}"><rect x="${x}" y="700" width="150" height="100" rx="6" fill="rgba(255,255,255,.03)" stroke="${verified ? C.ok : C.line2}"/>` +
+          tx(x + 16, 730, 13, 'decision', { m: 1, fill: C.dim }) + tx(x + 16, 756, 13, 'prev ' + hx.slice(0, 6), { m: 1, fill: C.faint }) +
+          tx(x + 16, 784, 13, '# ' + hx, { m: 1, fill: C.ok }) + `<path d="M${x + 150} 750 H${x + 190}" stroke="${C.ok}" stroke-width="2" opacity=".6"/></g>`;
+      }
+      if (sweep > 0 && sweep < 1) s += `<rect x="${L(140, 1640, sweep) - 120}" y="690" width="120" height="120" fill="url(#trailG)"/><rect x="${L(140, 1640, sweep)}" y="690" width="5" height="120" fill="${C.ok}" filter="url(#glow)"/>`;
+      s += pill(1560, 668, 'RFC 3161 anchor', C.ice, ko(p, 0.66, 0.72), 14);
+    }
+    return s;
+  },
+  outro(p, lt, t) {
+    let s = engineCore(960, 390, 0.9, t, ko(p, 0, 0.15));
+    const word = 'Qadamar';
+    s += `<text x="960" y="640" font-size="92" font-weight="600" text-anchor="middle" letter-spacing="1" fill="${C.text}">` +
+      [...word].map((ch, i) => `<tspan opacity="${eo(cl((p - 0.08 - i * 0.012) / 0.12))}">${esc(ch)}</tspan>`).join('') + `</text>`;
+    const sw = cl((p - 0.24) / 0.2);
+    if (sw > 0 && sw < 1) s += `<rect x="${L(560, 1360, sw) - 60}" y="560" width="120" height="100" fill="url(#sheen)" transform="skewX(-18)" transform-origin="960 600"/>`;
+    s += `<g ${reveal(ko(p, 0.2, 0.38))}>` + tx(960, 710, 30, 'Self-hosted access control for regulated organisations.', { a: 'middle', fill: C.dim, w: 300 }) + `</g>`;
+    ['government', 'banking', 'healthcare', 'enterprise'].forEach((key, i) => {
+      s += `<g opacity="${k(p, 0.3 + i * 0.05, 0.45 + i * 0.05) * 0.8}" transform="translate(${780 + i * 120} 820) scale(.42)">${ICON[key](C.dim)}</g>`;
+    });
+    s += tx(960, 1010, 17, 'Illustrative scenarios, not customers. Every behaviour shown exists in version 0.12.2 (pre-1.0).', { a: 'middle', fill: C.faint, op: k(p, 0.4, 0.55), m: 1 });
+    return s;
+  },
+};
+
+if (!window.__BUILD__) {
+  setTimes(Object.keys(SCENES).map((id, i) => ({ id, start: i * 14, dur: 14 })));
+  frame(Number(new URLSearchParams(location.search).get('t') || 0));
+}
+</script>
+</body>
+</html>
