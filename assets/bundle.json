@@ -1,0 +1,126 @@
+{
+  "name": "toy-agency-case-files",
+  "schema": {
+    "compartments": ["ORCHID", "FALCON"],
+    "resourceTypes": {
+      "case": {
+        "actions": {
+          "read": { "kind": "read" },
+          "update": { "kind": "write" },
+          "export": { "kind": "read" },
+          "delete": { "kind": "delete" },
+          "close": { "kind": "write", "certified": true }
+        },
+        "relations": {
+          "member": { "union": [{ "this": true }, { "fromParent": { "relation": "parent", "then": "member" } }] },
+          "allocated": { "union": [{ "this": true }] },
+          "delegate": { "union": [{ "this": true }] },
+          "granted": { "union": [{ "this": true }] },
+          "parent": { "union": [{ "this": true }] },
+          "direct_knows": { "union": [{ "computed": "member" }, { "computed": "allocated" }, { "computed": "delegate" }, { "computed": "granted" }] },
+          "knows": { "union": [
+            { "computed": "direct_knows" },
+            { "viaReports": { "managerRelation": "manager", "then": "direct_knows", "maxDepth": 20 } }
+          ] }
+        }
+      },
+      "folder": {
+        "actions": { "read": { "kind": "read" } },
+        "relations": { "member": { "union": [{ "this": true }] } }
+      },
+      "payment": {
+        "constrained": true,
+        "actions": {
+          "read": { "kind": "read" },
+          "create": { "kind": "write", "certified": true },
+          "edit": { "kind": "write" },
+          "approve": { "kind": "approve", "certified": true, "requiresSecondPerson": true },
+          "release": { "kind": "execute", "certified": true }
+        }
+      }
+    },
+    "subjectRelations": {
+      "team": { "member": { "union": [{ "this": true }] } },
+      "user": { "manager": { "union": [{ "this": true }] } }
+    }
+  },
+  "rbac": {
+    "roles": {
+      "viewer": { "grants": [{ "resourceType": "case", "actions": ["read"] }, { "resourceType": "folder", "actions": ["read"] }] },
+      "investigator": { "inherits": ["viewer"], "grants": [{ "resourceType": "case", "actions": ["update", "export"] }] },
+      "case_lead": { "inherits": ["investigator"], "grants": [{ "resourceType": "case", "actions": ["close", "delete"] }] },
+      "finance_clerk": { "grants": [{ "resourceType": "payment", "actions": ["read", "create", "edit"] }] },
+      "finance_approver": { "grants": [{ "resourceType": "payment", "actions": ["read", "approve", "release"] }] },
+      "security_officer": { "inherits": ["viewer"], "grants": [] },
+      "declassifier": { "inherits": ["investigator"], "grants": [] },
+      "auditor": { "inherits": ["viewer"], "grants": [] }
+    }
+  },
+  "mandatory": {
+    "trustedRoles": ["declassifier"],
+    "untrustedNetworkMaxLevel": 2,
+    "compartmentsRequireTrustedNetwork": true,
+    "bibaNoReadDownActions": ["approve", "close"]
+  },
+  "needToKnow": {
+    "mode": "enforce",
+    "protect": { "case": { "relation": "knows", "minLevel": 1 } },
+    "breakGlassMaxHours": 4,
+    "breakGlassNotify": ["security-officer"]
+  },
+  "abac": [
+    {
+      "id": "owner-read",
+      "description": "The owner of a case may read it even without a reading role",
+      "effect": "permit",
+      "resourceTypes": ["case"],
+      "actions": ["read"],
+      "when": { "op": "eq", "left": { "path": "resource.owner" }, "right": { "path": "subject.id" } }
+    },
+    {
+      "id": "no-export-untrusted",
+      "description": "Exports are refused from an untrusted network",
+      "effect": "forbid",
+      "actions": ["export"],
+      "when": { "op": "eq", "left": { "path": "context.network" }, "right": { "value": "untrusted" } }
+    },
+    {
+      "id": "closed-is-read-only",
+      "description": "A closed case cannot be updated",
+      "effect": "forbid",
+      "resourceTypes": ["case"],
+      "actions": ["update", "delete"],
+      "when": { "op": "eq", "left": { "path": "resource.attrs.status" }, "right": { "value": "closed" } }
+    },
+    {
+      "id": "informant-redaction",
+      "description": "The informant name is withheld below L3 clearance",
+      "effect": "obligation",
+      "resourceTypes": ["case"],
+      "actions": ["read", "export"],
+      "when": { "op": "lt", "left": { "path": "subject.clearance" }, "right": { "value": 3 } },
+      "obligations": { "redact": ["informant_name"] }
+    }
+  ],
+  "abacContent": [
+    {
+      "id": "finance-mask",
+      "description": "Financial amounts are masked for anyone without a finance approver role",
+      "contentClass": "finance.amount",
+      "effect": "mask",
+      "unless": { "op": "contains", "left": { "path": "subject.roles" }, "right": { "value": "finance_approver" } }
+    },
+    {
+      "id": "no-iban-export",
+      "description": "A document carrying bank account numbers is never exported",
+      "contentClass": "pii.iban",
+      "effect": "deny",
+      "actions": ["export"]
+    }
+  ],
+  "sod": [
+    { "id": "create-vs-approve", "description": "Whoever created a payment cannot approve it", "conflicting": ["create", "approve"] },
+    { "id": "create-vs-release", "description": "Whoever created a payment cannot release it", "conflicting": ["create", "release"] }
+  ],
+  "clarkWilson": { "tokenTtlSeconds": 15 }
+}

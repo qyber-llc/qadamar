@@ -1,0 +1,541 @@
+{
+  "generatedAt": "2026-11-20T16:51:56.078Z",
+  "fixtureTime": "2026-11-08T10:00:00Z",
+  "source": "packages/core/src/evaluate.ts",
+  "kind": "precomputed-engine-fixtures",
+  "scenarios": [
+    {
+      "action": "read",
+      "network": "trusted",
+      "request": {
+        "subject": {
+          "type": "user",
+          "id": "amira",
+          "active": true,
+          "roles": [
+            "case_lead"
+          ],
+          "clearance": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "attrs": {
+            "name": "Amira",
+            "unit": "Field operations"
+          }
+        },
+        "resource": {
+          "type": "case",
+          "id": "CASE-7",
+          "level": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "owner": "alice",
+          "version": 12,
+          "attrs": {
+            "title": "Harbour surveillance",
+            "status": "open"
+          },
+          "contentClasses": []
+        },
+        "action": "read",
+        "context": {
+          "network": "trusted",
+          "now": "2026-11-08T10:00:00Z"
+        }
+      },
+      "output": {
+        "decision": true,
+        "rules": [
+          "RBAC.viewer",
+          "NTK.knows"
+        ],
+        "reasons": [],
+        "obligations": {
+          "redact": [],
+          "maskClasses": [],
+          "notify": []
+        },
+        "trace": [
+          {
+            "stage": "rbac",
+            "rule": "RBAC.viewer",
+            "outcome": "pass",
+            "reason": "role grants read on case"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "MAC",
+            "outcome": "pass",
+            "reason": "level, compartments, network and integrity satisfied"
+          },
+          {
+            "stage": "need_to_know",
+            "rule": "NTK.knows",
+            "outcome": "pass",
+            "reason": "reason to know via knows",
+            "path": [
+              "case:CASE-7#member@team:orchid#member",
+              "team:orchid#member@user:amira"
+            ]
+          }
+        ],
+        "wouldDeny": [],
+        "policyVersion": "pv.0eae729574d1302a1feeee69649742129b0294c78c60dfe04c21ffcf6aa52eb7"
+      }
+    },
+    {
+      "action": "read",
+      "network": "untrusted",
+      "request": {
+        "subject": {
+          "type": "user",
+          "id": "amira",
+          "active": true,
+          "roles": [
+            "case_lead"
+          ],
+          "clearance": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "attrs": {
+            "name": "Amira",
+            "unit": "Field operations"
+          }
+        },
+        "resource": {
+          "type": "case",
+          "id": "CASE-7",
+          "level": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "owner": "alice",
+          "version": 12,
+          "attrs": {
+            "title": "Harbour surveillance",
+            "status": "open"
+          },
+          "contentClasses": []
+        },
+        "action": "read",
+        "context": {
+          "network": "untrusted",
+          "now": "2026-11-08T10:00:00Z"
+        }
+      },
+      "output": {
+        "decision": false,
+        "rules": [
+          "NET.UNTRUSTED_LEVEL",
+          "NET.UNTRUSTED_COMPARTMENT"
+        ],
+        "reasons": [
+          "L3 is reachable only from a trusted network (untrusted max L2)",
+          "compartmented resources are reachable only from a trusted network"
+        ],
+        "obligations": {
+          "redact": [],
+          "maskClasses": [],
+          "notify": []
+        },
+        "trace": [
+          {
+            "stage": "rbac",
+            "rule": "RBAC.viewer",
+            "outcome": "pass",
+            "reason": "role grants read on case"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "NET.UNTRUSTED_LEVEL",
+            "outcome": "deny",
+            "reason": "L3 is reachable only from a trusted network (untrusted max L2)"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "NET.UNTRUSTED_COMPARTMENT",
+            "outcome": "deny",
+            "reason": "compartmented resources are reachable only from a trusted network"
+          },
+          {
+            "stage": "need_to_know",
+            "rule": "NTK.knows",
+            "outcome": "pass",
+            "reason": "reason to know via knows",
+            "path": [
+              "case:CASE-7#member@team:orchid#member",
+              "team:orchid#member@user:amira"
+            ]
+          }
+        ],
+        "wouldDeny": [],
+        "policyVersion": "pv.0eae729574d1302a1feeee69649742129b0294c78c60dfe04c21ffcf6aa52eb7"
+      }
+    },
+    {
+      "action": "export",
+      "network": "trusted",
+      "request": {
+        "subject": {
+          "type": "user",
+          "id": "amira",
+          "active": true,
+          "roles": [
+            "case_lead"
+          ],
+          "clearance": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "attrs": {
+            "name": "Amira",
+            "unit": "Field operations"
+          }
+        },
+        "resource": {
+          "type": "case",
+          "id": "CASE-7",
+          "level": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "owner": "alice",
+          "version": 12,
+          "attrs": {
+            "title": "Harbour surveillance",
+            "status": "open"
+          },
+          "contentClasses": []
+        },
+        "action": "export",
+        "context": {
+          "network": "trusted",
+          "now": "2026-11-08T10:00:00Z"
+        }
+      },
+      "output": {
+        "decision": true,
+        "rules": [
+          "RBAC.investigator",
+          "NTK.knows"
+        ],
+        "reasons": [],
+        "obligations": {
+          "redact": [],
+          "maskClasses": [],
+          "notify": []
+        },
+        "trace": [
+          {
+            "stage": "rbac",
+            "rule": "RBAC.investigator",
+            "outcome": "pass",
+            "reason": "role grants export on case"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "MAC",
+            "outcome": "pass",
+            "reason": "level, compartments, network and integrity satisfied"
+          },
+          {
+            "stage": "need_to_know",
+            "rule": "NTK.knows",
+            "outcome": "pass",
+            "reason": "reason to know via knows",
+            "path": [
+              "case:CASE-7#member@team:orchid#member",
+              "team:orchid#member@user:amira"
+            ]
+          }
+        ],
+        "wouldDeny": [],
+        "policyVersion": "pv.0eae729574d1302a1feeee69649742129b0294c78c60dfe04c21ffcf6aa52eb7"
+      }
+    },
+    {
+      "action": "export",
+      "network": "untrusted",
+      "request": {
+        "subject": {
+          "type": "user",
+          "id": "amira",
+          "active": true,
+          "roles": [
+            "case_lead"
+          ],
+          "clearance": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "attrs": {
+            "name": "Amira",
+            "unit": "Field operations"
+          }
+        },
+        "resource": {
+          "type": "case",
+          "id": "CASE-7",
+          "level": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "owner": "alice",
+          "version": 12,
+          "attrs": {
+            "title": "Harbour surveillance",
+            "status": "open"
+          },
+          "contentClasses": []
+        },
+        "action": "export",
+        "context": {
+          "network": "untrusted",
+          "now": "2026-11-08T10:00:00Z"
+        }
+      },
+      "output": {
+        "decision": false,
+        "rules": [
+          "NET.UNTRUSTED_LEVEL",
+          "NET.UNTRUSTED_COMPARTMENT",
+          "ABAC.no-export-untrusted"
+        ],
+        "reasons": [
+          "L3 is reachable only from a trusted network (untrusted max L2)",
+          "compartmented resources are reachable only from a trusted network",
+          "Exports are refused from an untrusted network"
+        ],
+        "obligations": {
+          "redact": [],
+          "maskClasses": [],
+          "notify": []
+        },
+        "trace": [
+          {
+            "stage": "rbac",
+            "rule": "RBAC.investigator",
+            "outcome": "pass",
+            "reason": "role grants export on case"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "NET.UNTRUSTED_LEVEL",
+            "outcome": "deny",
+            "reason": "L3 is reachable only from a trusted network (untrusted max L2)"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "NET.UNTRUSTED_COMPARTMENT",
+            "outcome": "deny",
+            "reason": "compartmented resources are reachable only from a trusted network"
+          },
+          {
+            "stage": "need_to_know",
+            "rule": "NTK.knows",
+            "outcome": "pass",
+            "reason": "reason to know via knows",
+            "path": [
+              "case:CASE-7#member@team:orchid#member",
+              "team:orchid#member@user:amira"
+            ]
+          },
+          {
+            "stage": "abac",
+            "rule": "ABAC.no-export-untrusted",
+            "outcome": "deny",
+            "reason": "Exports are refused from an untrusted network"
+          }
+        ],
+        "wouldDeny": [],
+        "policyVersion": "pv.0eae729574d1302a1feeee69649742129b0294c78c60dfe04c21ffcf6aa52eb7"
+      }
+    },
+    {
+      "action": "update",
+      "network": "trusted",
+      "request": {
+        "subject": {
+          "type": "user",
+          "id": "amira",
+          "active": true,
+          "roles": [
+            "case_lead"
+          ],
+          "clearance": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "attrs": {
+            "name": "Amira",
+            "unit": "Field operations"
+          }
+        },
+        "resource": {
+          "type": "case",
+          "id": "CASE-7",
+          "level": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "owner": "alice",
+          "version": 12,
+          "attrs": {
+            "title": "Harbour surveillance",
+            "status": "open"
+          },
+          "contentClasses": []
+        },
+        "action": "update",
+        "context": {
+          "network": "trusted",
+          "now": "2026-11-08T10:00:00Z"
+        }
+      },
+      "output": {
+        "decision": true,
+        "rules": [
+          "RBAC.investigator",
+          "NTK.knows"
+        ],
+        "reasons": [],
+        "obligations": {
+          "redact": [],
+          "maskClasses": [],
+          "notify": []
+        },
+        "trace": [
+          {
+            "stage": "rbac",
+            "rule": "RBAC.investigator",
+            "outcome": "pass",
+            "reason": "role grants update on case"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "MAC",
+            "outcome": "pass",
+            "reason": "level, compartments, network and integrity satisfied"
+          },
+          {
+            "stage": "need_to_know",
+            "rule": "NTK.knows",
+            "outcome": "pass",
+            "reason": "reason to know via knows",
+            "path": [
+              "case:CASE-7#member@team:orchid#member",
+              "team:orchid#member@user:amira"
+            ]
+          }
+        ],
+        "wouldDeny": [],
+        "policyVersion": "pv.0eae729574d1302a1feeee69649742129b0294c78c60dfe04c21ffcf6aa52eb7"
+      }
+    },
+    {
+      "action": "update",
+      "network": "untrusted",
+      "request": {
+        "subject": {
+          "type": "user",
+          "id": "amira",
+          "active": true,
+          "roles": [
+            "case_lead"
+          ],
+          "clearance": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "attrs": {
+            "name": "Amira",
+            "unit": "Field operations"
+          }
+        },
+        "resource": {
+          "type": "case",
+          "id": "CASE-7",
+          "level": 3,
+          "compartments": [
+            "ORCHID"
+          ],
+          "integrity": "verified",
+          "owner": "alice",
+          "version": 12,
+          "attrs": {
+            "title": "Harbour surveillance",
+            "status": "open"
+          },
+          "contentClasses": []
+        },
+        "action": "update",
+        "context": {
+          "network": "untrusted",
+          "now": "2026-11-08T10:00:00Z"
+        }
+      },
+      "output": {
+        "decision": false,
+        "rules": [
+          "NET.UNTRUSTED_LEVEL",
+          "NET.UNTRUSTED_COMPARTMENT"
+        ],
+        "reasons": [
+          "L3 is reachable only from a trusted network (untrusted max L2)",
+          "compartmented resources are reachable only from a trusted network"
+        ],
+        "obligations": {
+          "redact": [],
+          "maskClasses": [],
+          "notify": []
+        },
+        "trace": [
+          {
+            "stage": "rbac",
+            "rule": "RBAC.investigator",
+            "outcome": "pass",
+            "reason": "role grants update on case"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "NET.UNTRUSTED_LEVEL",
+            "outcome": "deny",
+            "reason": "L3 is reachable only from a trusted network (untrusted max L2)"
+          },
+          {
+            "stage": "mandatory",
+            "rule": "NET.UNTRUSTED_COMPARTMENT",
+            "outcome": "deny",
+            "reason": "compartmented resources are reachable only from a trusted network"
+          },
+          {
+            "stage": "need_to_know",
+            "rule": "NTK.knows",
+            "outcome": "pass",
+            "reason": "reason to know via knows",
+            "path": [
+              "case:CASE-7#member@team:orchid#member",
+              "team:orchid#member@user:amira"
+            ]
+          }
+        ],
+        "wouldDeny": [],
+        "policyVersion": "pv.0eae729574d1302a1feeee69649742129b0294c78c60dfe04c21ffcf6aa52eb7"
+      }
+    }
+  ]
+}

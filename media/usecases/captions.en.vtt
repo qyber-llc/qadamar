@@ -1,0 +1,73 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.850
+Qadamar decides, on every request, who may see or do what.
+
+00:00:03.850 --> 00:00:07.700
+And it keeps a record of every decision.
+
+00:00:08.600 --> 00:00:11.273
+Think of each request as a marble. It passes a row
+
+00:00:11.273 --> 00:00:13.947
+of gates, always in the same order. A single no is
+
+00:00:13.947 --> 00:00:16.620
+enough to stop it.
+
+00:00:17.520 --> 00:00:21.190
+First case: a payment. Whoever created it can neither approve it
+
+00:00:21.190 --> 00:00:24.860
+nor release it. A second person has to.
+
+00:00:25.760 --> 00:00:31.055
+In an emergency, you can break the glass. Access lasts four
+
+00:00:31.055 --> 00:00:36.350
+hours at most, never for yourself, an alert goes out, and
+
+00:00:36.350 --> 00:00:41.645
+someone else reviews it afterwards. But it never grants a clearance
+
+00:00:41.645 --> 00:00:46.940
+level you don't already hold.
+
+00:00:47.840 --> 00:00:51.620
+Documents carry a level, from L zero to L three. You
+
+00:00:51.620 --> 00:00:55.400
+cannot read above your level. And you cannot write below it,
+
+00:00:55.400 --> 00:00:59.180
+so a secret never leaks downwards.
+
+00:01:00.080 --> 00:01:03.913
+Context is checked on every request: network, time, device, recent sign-in.
+
+00:01:03.913 --> 00:01:07.747
+Off the trusted network, the reachable level drops. And if a
+
+00:01:07.747 --> 00:01:11.580
+signal is missing, the answer is no.
+
+00:01:12.480 --> 00:01:15.540
+To change a rule, you first see its impact: who gains
+
+00:01:15.540 --> 00:01:18.600
+access, and who loses it. Then a second person approves. Nobody
+
+00:01:18.600 --> 00:01:21.660
+can approve their own change.
+
+00:01:22.560 --> 00:01:26.410
+Every decision is written to a chained log. If one entry
+
+00:01:26.410 --> 00:01:30.260
+is altered, the chain breaks, and verification shows it.
+
+00:01:31.160 --> 00:01:34.070
+Your access rules in one place, instead of scattered through the
+
+00:01:34.070 --> 00:01:36.980
+code. Qadamar.

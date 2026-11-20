@@ -1,0 +1,76 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.370
+Every day, regulated organisations decide who may see what. Qadamar makes
+
+00:00:04.370 --> 00:00:08.740
+each of those decisions, explains it, and records it.
+
+00:00:09.840 --> 00:00:14.033
+Each request passes nine checks, always in the same order: from
+
+00:00:14.033 --> 00:00:18.227
+role, through classification and need-to-know, to context and separation of duty.
+
+00:00:18.227 --> 00:00:22.420
+A single deny stops it.
+
+00:00:23.520 --> 00:00:27.115
+Government. Case files carry a classification and compartments. An analyst cleared
+
+00:00:27.115 --> 00:00:30.710
+to L two searches the archive: L three files never appear,
+
+00:00:30.710 --> 00:00:34.305
+not even their titles. And off the trusted network, the reachable
+
+00:00:34.305 --> 00:00:37.900
+level drops.
+
+00:00:39.000 --> 00:00:43.727
+Banking. The officer who creates a payment cannot approve it, or
+
+00:00:43.727 --> 00:00:48.453
+release it. Release runs as a certified command, with a single-use,
+
+00:00:48.453 --> 00:00:53.180
+signed token. And a document carrying account numbers is never exported.
+
+00:00:54.280 --> 00:00:58.195
+Healthcare. A clinician sees the records of the patients they treat,
+
+00:00:58.195 --> 00:01:02.110
+and nothing else. In an emergency, the glass can be broken,
+
+00:01:02.110 --> 00:01:06.025
+with a reason, for four hours at most. An alert goes
+
+00:01:06.025 --> 00:01:09.940
+out, and someone else reviews it.
+
+00:01:11.040 --> 00:01:15.596
+Enterprise CRM. A project manager opens a contract: the client, the
+
+00:01:15.596 --> 00:01:20.152
+scope, the milestones. The amounts come back masked, because they carry
+
+00:01:20.152 --> 00:01:24.708
+the finance class. A finance approver opens the same contract and
+
+00:01:24.708 --> 00:01:29.264
+sees them. And if the mask cannot be applied, nothing is
+
+00:01:29.264 --> 00:01:33.820
+released.
+
+00:01:34.920 --> 00:01:37.620
+Every rule change shows its impact first, and needs a second
+
+00:01:37.620 --> 00:01:40.320
+approver. And every decision lands in a hash-chained log that an
+
+00:01:40.320 --> 00:01:43.020
+auditor can verify.
+
+00:01:44.120 --> 00:01:49.820
+Qadamar. Self-hosted access control for regulated organisations.
