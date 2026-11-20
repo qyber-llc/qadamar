@@ -78,7 +78,7 @@ jobs:
       - name: Secret scan (gitleaks, full history)
         run: |
           bash tools/ci/install-gitleaks.sh
-          gitleaks git --no-banner --redact .
+          "$GITHUB_WORKSPACE/.ci-bin/gitleaks" git --no-banner --redact .
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Dependency vulnerability scan (production dependencies, high and critical block)
