@@ -1,5 +1,5 @@
 /* Access matrix: the funnel of layers doubles as the lens picker; each cell stacks the seven layers. */
-.mx { --mx-pass: var(--allow-dot); --mx-deny: var(--deny-dot); --mx-cond: #e0a526; --mx-none: rgba(255, 255, 255, 0.07); }
+.mx { --mx-pass: var(--allow-dot); --mx-deny: var(--deny-dot); --mx-cond: #e0a526; --mx-none: var(--ds-fill-strong); }
 
 .mx-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
 .mx-field { display: grid; gap: 4px; font-size: 12px; color: var(--text-secondary); }
@@ -12,18 +12,21 @@
 .mx-step, .mx-granted {
   width: 100%; height: 100%; display: grid; gap: 2px; align-content: start; text-align: start;
   padding: 12px 14px; border-radius: 14px; color: var(--text-primary); font: inherit;
-  background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.09);
+  background: var(--ds-surface); border: 1px solid var(--ds-border);
 }
 .mx-step { cursor: pointer; transition: background 160ms ease, border-color 160ms ease; }
-.mx-step:hover { background: rgba(255, 255, 255, 0.08); }
-.mx-step[aria-pressed="true"] { border-color: rgba(95, 208, 138, 0.7); background: rgba(0, 130, 53, 0.18); }
+.mx-step:hover { background: var(--ds-sunken); }
+.mx-step[aria-pressed="true"] { border-color: var(--ds-accent); background: var(--ds-accent-soft); }
 .mx-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .mx-step b, .mx-granted b { font-size: 26px; font-weight: 650; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .mx-step-model { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 .mx-step-label { font-size: 12px; color: var(--text-secondary); }
-.mx-step-bar { display: block; height: 3px; margin-top: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.mx-step-bar { display: block; height: 3px; margin-top: 6px; border-radius: 2px; background: var(--ds-fill-strong); overflow: hidden; }
 .mx-step-bar i { display: block; height: 100%; background: linear-gradient(90deg, #008235, #5fd08a); }
-.mx-granted { background: linear-gradient(160deg, rgba(0, 130, 53, 0.55), rgba(0, 90, 40, 0.35)); border-color: rgba(95, 208, 138, 0.45); }
+/* the result tile: the deep green of the overview hero, light text on it */
+.mx-granted { background: linear-gradient(160deg, #145a39, #103b28); border-color: transparent; color: #fff; }
+.mx-granted .mx-step-model { color: #d8eade; }
+.mx-granted .mx-step-label { color: #c8dccf; }
 
 .mx-lens-hint { margin: 4px 0 12px; font-size: 13px; color: var(--text-secondary); }
 
@@ -31,18 +34,18 @@
   /* a focused cell scrolls clear of the sticky name column (176px + spacing), never under it */
   scroll-padding-inline-start: 186px;
   overflow-x: auto; border-radius: 16px; padding: 6px;
-  background: rgba(10, 12, 14, 0.35); border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--ds-sunken); border: 1px solid var(--ds-border);
 }
 .mx-table { border-collapse: separate; border-spacing: 4px; width: 100%; min-width: 980px; table-layout: fixed; }
 .mx-table thead th:first-child { width: 176px; }
 .mx-table th { font-weight: 500; text-align: start; vertical-align: bottom; white-space: normal; overflow-wrap: anywhere; }
 .mx-corner, .mx-row {
   position: sticky; inset-inline-start: 0; z-index: 1; padding: 8px 10px; border-radius: 10px;
-  background: rgba(16, 19, 22, 0.92);
+  background: var(--ds-surface);
 }
 .mx-corner { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 .mx-col { padding: 6px 6px 8px; border-radius: 10px; overflow: hidden; }
-.mx-col.is-hot, tr.is-hot > .mx-row { background: rgba(0, 130, 53, 0.22); }
+.mx-col.is-hot, tr.is-hot > .mx-row { background: var(--ds-accent-soft); }
 .mx-res-id { display: block; font-weight: 650; font-size: 13px; color: var(--text-primary); }
 .mx-res-title {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
@@ -53,31 +56,31 @@
 .mx-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .mx-tag {
   font-size: 10.5px; font-weight: 600; line-height: 1; padding: 3px 6px; border-radius: 6px;
-  color: var(--text-secondary); background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary); background: var(--ds-fill); border: 1px solid var(--ds-border);
 }
-.mx-tag-comp { color: #c9b6ff; border-color: rgba(167, 139, 250, 0.35); background: rgba(124, 58, 237, 0.14); }
-.mx-tag-content { color: #ffd38a; border-color: rgba(224, 165, 38, 0.35); background: rgba(224, 165, 38, 0.12); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 500; }
+.mx-tag-comp { color: #5b3fb3; border-color: rgba(124, 58, 237, 0.3); background: #f1edfd; }
+.mx-tag-content { color: var(--ds-warning-text); border-color: var(--warn-border); background: var(--ds-warning-soft); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 500; }
 
 .mx-table td { padding: 0; }
 .mx-cell {
   width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 7px 8px; border-radius: 10px; cursor: pointer; font: inherit; color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--ds-sunken); border: 1px solid var(--ds-border);
   transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
 }
-.mx-cell:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
+.mx-cell:hover { background: var(--ds-fill); transform: translateY(-1px); }
 .mx-cell:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-tr.is-hot .mx-cell, .mx-table td:hover .mx-cell { border-color: rgba(255, 255, 255, 0.16); }
-.mx-cell.v-allow { background: rgba(0, 130, 53, 0.2); border-color: rgba(95, 208, 138, 0.45); }
-.mx-cell.v-partial { background: rgba(224, 165, 38, 0.13); border-color: rgba(224, 165, 38, 0.45); }
+tr.is-hot .mx-cell, .mx-table td:hover .mx-cell { border-color: var(--ds-border-strong); }
+.mx-cell.v-allow { background: var(--ds-accent-soft); border-color: var(--allow-border); }
+.mx-cell.v-partial { background: var(--ds-warning-soft); border-color: var(--warn-border); }
 
 /* six stacked layers: rights on top, controls at the bottom */
 .mx-stack { display: grid; gap: 2px; width: 34px; }
 .mx-stack i { display: block; height: 4px; border-radius: 2px; }
 .mx-verdict { font-size: 15px; font-weight: 700; width: 1em; text-align: center; }
-.v-allow .mx-verdict { color: #5fd08a; }
-.v-partial .mx-verdict { color: var(--mx-cond); }
-.v-deny .mx-verdict { color: color-mix(in srgb, var(--mx-deny) 60%, #fff); }
+.v-allow .mx-verdict { color: var(--ds-accent-soft-text); }
+.v-partial .mx-verdict { color: var(--ds-warning-text); }
+.v-deny .mx-verdict { color: var(--ds-danger-text); }
 
 .o-pass { background: var(--mx-pass); }
 .o-deny { background: var(--mx-deny); }
@@ -87,11 +90,11 @@ tr.is-hot .mx-cell, .mx-table td:hover .mx-cell { border-color: rgba(255, 255, 2
 
 /* one layer at a time: the cell names the rule that decided it */
 .mx-one { min-height: 44px; font-size: 11.5px; font-weight: 600; text-align: center; line-height: 1.2; }
-.mx-one.o-pass { background: rgba(0, 130, 53, 0.24); border-color: rgba(95, 208, 138, 0.5); color: #c8f2d8; }
-.mx-one.o-deny { background: rgba(214, 51, 54, 0.2); border-color: rgba(255, 107, 107, 0.5); color: #ffd0d0; }
-.mx-one.o-obligation { background: rgba(224, 165, 38, 0.16); border-color: rgba(224, 165, 38, 0.5); color: #ffe2a8; }
-.mx-one.o-would_deny { background: rgba(224, 165, 38, 0.08); border: 1px dashed rgba(224, 165, 38, 0.6); color: #ffe2a8; }
-.mx-one.o-none { background: rgba(255, 255, 255, 0.025); color: var(--text-muted); font-weight: 400; }
+.mx-one.o-pass { background: var(--ds-accent-soft); border-color: var(--allow-border); color: var(--ds-accent-soft-text); }
+.mx-one.o-deny { background: var(--ds-danger-soft); border-color: var(--deny-border); color: var(--ds-danger-text); }
+.mx-one.o-obligation { background: var(--ds-warning-soft); border-color: var(--warn-border); color: var(--ds-warning-text); }
+.mx-one.o-would_deny { background: var(--ds-surface); border: 1px dashed var(--ds-warning); color: var(--ds-warning-text); }
+.mx-one.o-none { background: var(--ds-sunken); color: var(--text-muted); font-weight: 400; }
 .mx-na { display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 11px; color: var(--text-muted); }
 
 .mx-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 2px 0; padding: 0; font-size: 12px; color: var(--text-secondary); }
