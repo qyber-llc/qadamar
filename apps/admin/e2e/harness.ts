@@ -23,6 +23,7 @@ export interface Context {
   newPage(): Promise<Page>; close(): Promise<void>;
   request: { post(url: string, o: { data: unknown }): Promise<{ status(): number }> };
   storageState(): Promise<unknown>;
+  addInitScript<T>(script: (arg: T) => void, arg: T): Promise<void>;
   newCDPSession(page: Page): Promise<{ send(method: string, params?: object): Promise<any> }>;
 }
 export interface Browser { newContext(o: object): Promise<Context>; close(): Promise<void> }
