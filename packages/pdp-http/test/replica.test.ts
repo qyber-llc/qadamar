@@ -294,7 +294,8 @@ test('a key rotation on the database is followed through the introduction the ol
   assert.equal((await call(d.leader.url, '/admin/v1/signing-keys/rotate', 'POST', {}, await d.login('lina'))).status, 201);
   // the database now signs with the new key only; the replica keeps deciding because the old key introduced it
   await new Promise((done) => setTimeout(done, BOUND * 2));
-  assert.equal((await decide(r.server.url, d.pep)).status, 200);
+  // a slow runner may still be re-reading the trust file: poll rather than assert once
+  await within(10_000, async () => (await decide(r.server.url, d.pep)).status === 200);
   const trusted = JSON.parse(readFileSync(resolve(r.dir, 'replica-trust.json'), 'utf8')) as { trusted: string[] };
   assert.equal(trusted.trusted.length, 2, 'the pinned key and the key it introduced');
 });

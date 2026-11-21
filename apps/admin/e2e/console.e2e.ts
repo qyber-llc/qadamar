@@ -41,6 +41,9 @@ async function open(options: { user?: string; locale?: string; colorScheme?: str
     baseURL: server.url, viewport: VIEWPORT, locale: options.locale ?? 'en-GB', colorScheme: options.colorScheme ?? 'light',
     forcedColors: options.forcedColors ?? 'none', reducedMotion: options.reducedMotion ?? 'reduce', ...(options.user ? { storageState: signedIn[options.user] } : {}),
   });
+  // a fresh browser opens in English (i18n.test.ts); the locale stands for a language this person chose earlier
+  const lang = (options.locale ?? 'en-GB').slice(0, 2);
+  await ctx.addInitScript((l) => { if (!window.localStorage.getItem('qadamar-lang')) window.localStorage.setItem('qadamar-lang', l); }, lang);
   const page = await ctx.newPage();
   return { ctx, page, errors: watchErrors(page) };
 }
