@@ -2,15 +2,17 @@
 
 /* A calm light workspace, aligned with the Qadamar website and Petra films.
    Semantic decision colours remain explicit; no authorization behaviour lives here. */
+/* Text green #077a57 and muted grey #6a6a6f sit one step under the brand's #087f5b / #6e6e73: on the soft fills
+   (#e8f3ed, #f0f0f3) those read 4.40 and 4.46, under WCAG AA's 4.5. */
 html:root, html[data-theme], #app-shell-root, main.signin-splash {
   color-scheme:light;
   --font-sans:var(--gate-font-sans);--font-display:var(--gate-font-sans);--font-mono:var(--gate-font-mono);
   --ds-canvas:var(--gate-bg);--ds-surface:#fff;--ds-elevated:#fff;--ds-sunken:#f8f8fa;
   --ds-fill:#f0f0f3;--ds-fill-strong:#e7e7ec;--ds-border:#e5e5ea;--ds-border-strong:#d2d2d7;--ds-control-border:#b9b9c1;
-  --ds-text:var(--gate-text);--ds-text-secondary:var(--gate-secondary);--ds-text-tertiary:var(--gate-muted);
-  --ds-accent:var(--gate-allow);--ds-accent-text:var(--gate-allow);--ds-accent-hover:#096b48;--ds-accent-pressed:#075e3e;--ds-on-accent:#fff;
+  --ds-text:var(--gate-text);--ds-text-secondary:var(--gate-secondary);--ds-text-tertiary:#6a6a6f;
+  --ds-accent:#077a57;--ds-accent-text:#077a57;--ds-accent-hover:#096b48;--ds-accent-pressed:#075e3e;--ds-on-accent:#fff;
   --ds-accent-soft:var(--gate-allow-soft);--ds-accent-soft-text:#17613f;--ds-focus:#0071e3;
-  --ds-success-text:var(--gate-allow);--ds-success-soft:var(--gate-allow-soft);
+  --ds-success-text:#077a57;--ds-success-soft:var(--gate-allow-soft);
   --ds-warning:var(--gate-warning);--ds-warning-text:#87530e;--ds-warning-soft:var(--gate-warning-soft);
   --ds-danger:var(--gate-deny);--ds-danger-text:var(--gate-deny-text);--ds-danger-soft:var(--gate-deny-soft);--ds-on-danger:#fff;
   --ds-shadow-ring:#1d1d1f06;--ds-shadow-key:#1d1d1f08;--ds-shadow-ambient:#1d1d1f0b;
@@ -38,7 +40,7 @@ body:has(#app-shell-root,.signin-splash)::before{display:none}
 #app-shell-root :is(.card-link,.sp-card,.v24-kpi):hover{background:#fafafb;border-color:#d2d2d7;box-shadow:0 5px 24px #00000004}
 #app-shell-root :is(.modal-panel,.popover-panel,.drawer-panel){background:#fff;color:var(--gate-text);border-color:#e5e5ea;box-shadow:var(--ds-elev-4)}
 #app-shell-root :is(.modal-panel,.popover-panel){border-radius:22px}
-#app-shell-root :is(th,.operations-label,.sp-card-title,.hdr-pill small,.rail-title,.kpi-label){font-family:var(--gate-font-sans);letter-spacing:.055em;font-size:12px;font-weight:600;text-transform:uppercase;color:#6e6e73}
+#app-shell-root :is(th,.operations-label,.sp-card-title,.hdr-pill small,.rail-title,.kpi-label){font-family:var(--gate-font-sans);letter-spacing:.055em;font-size:12px;font-weight:600;text-transform:uppercase;color:var(--ds-text-tertiary)}
 #app-shell-root .table-wrap th{background:#fafafb;padding-block:15px}
 #app-shell-root .table-wrap td{padding-block:17px}
 #app-shell-root :is(select,input[type=text],input[type=search],input[type=password],input[type=number],input[type=date],textarea),main.signin-splash :is(input[type=text],input[type=password]){color:#1d1d1f;background:#fafafb;border-color:#b9b9c1;border-radius:11px;min-height:42px}
@@ -68,7 +70,7 @@ body:has(#app-shell-root,.signin-splash)::before{display:none}
 #app-shell-root.v24 .v24-hero :is(h1,h2,h3){color:#fff}
 #app-shell-root.v24 .hero-cta .btn.v24-btn-light{background:#fff;color:#145a39;border-radius:999px}
 #app-shell-root.v24 .v24-hero :is(.hero-tag,.kpi-flag){border-radius:999px}
-#app-shell-root .mx-granted .mx-step-model{color:#d8eade}
+#app-shell-root.v24 .v24-rail.open .rail-badge{background:var(--ds-danger-soft);color:var(--ds-danger-text);box-shadow:inset 0 0 0 1px var(--deny-border)}
 main.signin-splash{background:radial-gradient(ellipse at 50% 35%,#edf4ef,#f5f5f7 65%)}
 main.signin-splash .signin-card{background:#fff;border:1px solid #e5e5ea;border-radius:28px;box-shadow:0 25px 80px #1d1d1f09;padding:36px}
 main.signin-splash label{font-family:var(--gate-font-sans);font-size:12px;font-weight:600;letter-spacing:.05em;color:#636369}
@@ -97,6 +99,7 @@ main.signin-splash .brand-tag{color:#636369;background:#f5f5f7;border-radius:8px
 #app-shell-root.v24 .kpi-flag{color:#87530e;background:#fbf2df;box-shadow:inset 0 0 0 1px #ecd6ad}
 #app-shell-root.v24 .rail-logo{background:#087f52;box-shadow:none}
 #app-shell-root.v24 .v24-rail-btn.on .v24-tile{box-shadow:none}
-#app-shell-root.v24 .v24-rail-ind{display:none}
+/* the selection shows as the button's own fill; the pill keeps its place (and RTL alignment) unseen */
+#app-shell-root.v24 .v24-rail-ind{visibility:hidden}
 #app-shell-root.v24 .v24-rail-btn{animation:none;transition:background-color .18s,color .18s}
 #app-shell-root.v24 .rail-brand{animation:none}
